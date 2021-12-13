@@ -1,0 +1,52 @@
+# action.yml
+name: 'Deploy with Tower'
+description: 'Deploy application on OPT SI thanks Tower'
+inputs:
+  extravars_template_filename:
+    description: "Fichier yaml templaté contenant les extra_vars"
+    required: true
+    default: 'tower_extra_vars_template.yml'
+  vars:
+    description: "Liste de variables qui seront utilisées dans le template"
+    required: true
+  asset_url:
+    description: "Url de l'asset à déployer"
+    required: true
+  tower_template_id:
+    description: "Identifiant du template Tower"
+    required: true
+  tower_url:
+    description: "Identifiant du template Tower"
+    required: true
+  tower_user:
+    description: "Identifiant utilisé pour le déploiement"
+    required: true
+  tower_password:
+    description: "Mot de passe utilisé pour le déploiement"
+    required: true
+  tower_timeout:
+    description: "Délai avant coupure de la connexion"
+    required: true
+    default: "300"
+  token:
+    description: "Token to access org info"
+    required: false
+
+
+outputs:
+  time: # id of output
+    description: 'The time we greeted you'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.extravars_template_filename }}
+    - ${{ inputs.vars }}
+    - ${{ inputs.asset_url }}
+    - ${{ inputs.tower_template_id }}
+    - ${{ inputs.tower_url }}
+    - ${{ inputs.tower_user }}
+    - ${{ inputs.tower_password }}
+    - ${{ inputs.tower_timeout }}
+    - ${{ inputs.token }}
+
