@@ -19,5 +19,7 @@ export OPT_TOWER_USER=$6
 export OPT_TOWER_PASSWORD=$7
 export OPT_TOWER_TIMEOUT=$8
 
-prepare_extra_vars.py
-launch_job.py
+pwd
+ls
+./prepare_extra_vars.py
+./launch_job.py
