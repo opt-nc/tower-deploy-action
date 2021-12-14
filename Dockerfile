@@ -10,6 +10,10 @@ RUN chmod +x entrypoint.sh
 RUN chmod +x launch_job.py
 RUN chmod +x prepare_extra_vars.py
 
+VOLUME . /consumer-sirh
+RUN ls
+RUN ls /consumer-sirh
+
 RUN pip install requests
 
 # Code file to execute when the docker container starts up (`entrypoint.sh`)
