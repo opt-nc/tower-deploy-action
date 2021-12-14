@@ -10,9 +10,7 @@ RUN chmod +x entrypoint.sh
 RUN chmod +x launch_job.py
 RUN chmod +x prepare_extra_vars.py
 
-VOLUME . /consumer-sirh
-RUN ls
-RUN ls /consumer-sirh
+RUN echo $(ls .)
 
 RUN pip install requests
 
