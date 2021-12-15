@@ -9,7 +9,7 @@
 # $7 tower_password
 # $8 tower_timeout
 
-export EXTRA_VARS_TEMPLATE_FILENAME="/github/workspace/app/src/main/java/resources/"$1
+export EXTRA_VARS_TEMPLATE_FILENAME="/github/workspace/app/src/main/resources/"$1
 export ARTIFACT_URL=$3
 export SECRETS_CONTEXT=$2
 export OPT_TOWER_TEMPLATE_ID=$4
