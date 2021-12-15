@@ -9,7 +9,7 @@
 # $7 tower_password
 # $8 tower_timeout
 
-export EXTRA_VARS_FILE="/github/workspace/app/src/main/java/resources/"$1
+export EXTRA_VARS_TEMPLATE_FILENAME="/github/workspace/app/src/main/java/resources/"$1
 export ARTIFACT_URL=$3
 export SECRETS_CONTEXT=$2
 export OPT_TOWER_TEMPLATE_ID=$4
@@ -19,7 +19,7 @@ export OPT_TOWER_USER=$6
 export OPT_TOWER_PASSWORD=$7
 export OPT_TOWER_TIMEOUT=$8
 
-ls /github/workspace/
+echo
 
 /prepare_extra_vars.py
 /launch_job.py
