@@ -10,6 +10,8 @@ RUN chmod +x entrypoint.sh
 RUN chmod +x launch_job.py
 RUN chmod +x prepare_extra_vars.py
 
+# Répertoire contenant le source de l'application à déployer
+# Permet de récuperer le fichier templaté des extra_vars contenu dans src/main/resources
 VOLUME ./../app /app
 
 RUN pip install requests

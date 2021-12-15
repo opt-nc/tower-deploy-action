@@ -9,11 +9,11 @@ finish and returns its status, 0 indicating no error.
 
 Input arguments are taken from environment variables :
 
-* OPT_TOWER_URL : base url of the Tower server
-* OPT_TOWER_USER : Username on the Tower server
-* OPT_TOWER_PASSWORD : Username's password
-* OPT_TOWER_TEMPLATE_ID : Template to use to launch the job
-* OPT_TOWER_TIMEOUT : optional timeout in seconds, defaults to 300 if not set
+* TOWER_URL : base url of the Tower server
+* TOWER_USER : Username on the Tower server
+* TOWER_PASSWORD : Username's password
+* TOWER_TEMPLATE_ID : Template to use to launch the job
+* TOWER_TIMEOUT : optional timeout in seconds, defaults to 300 if not set
 * EXTRA_VARS_FILE : Extra vars file
 """
 
@@ -63,7 +63,7 @@ class Tower:
     def wait(self, jobid):
         """Wait for a job to finish and return its result."""
         # Timeout defaults to 5 minutes if not set, with a minimum of 30 seconds
-        timeout = max(30, int(os.environ.get("OPT_TOWER_TIMEOUT", 300)))
+        timeout = max(30, int(os.environ.get("TOWER_TIMEOUT", 300)))
         maxsteps = timeout / WAITSTEP
         step = 0
         while step < maxsteps:
@@ -85,10 +85,10 @@ class Tower:
 
 def main():
     """Main function."""
-    tower_url = os.environ.get("OPT_TOWER_URL")
-    tower_username = os.environ.get("OPT_TOWER_USER")
-    tower_password = os.environ.get("OPT_TOWER_PASSWORD")
-    tower_template_id = os.environ.get("OPT_TOWER_TEMPLATE_ID")
+    tower_url = os.environ.get("TOWER_URL")
+    tower_username = os.environ.get("TOWER_USER")
+    tower_password = os.environ.get("TOWER_PASSWORD")
+    tower_template_id = os.environ.get("TOWER_TEMPLATE_ID")
     extra_vars_file = os.environ.get("EXTRA_VARS_FILE")
 
     if tower_url and tower_username and tower_password and tower_template_id:
@@ -112,8 +112,8 @@ def main():
         except requests.exceptions.ConnectionError as msg:
             sys.stderr.write(f"ERROR : Impossible to connect to Tower at {tower_url} :\n{msg}\n")
             return -3
-    sys.stderr.write(("ERROR : Environnement variables OPT_TOWER_URL, OPT_TOWER_USER,"
-                      " OPT_TOWER_PASSWORD and OPT_TOWER_TEMPLATE_ID must be defined.\n"))
+    sys.stderr.write(("ERROR : Environnement variables TOWER_URL, OPT_TOWER_USER,"
+                      " OPT_TOWER_PASSWORD and TOWER_TEMPLATE_ID must be defined.\n"))
     return -4
 
 if __name__ == "__main__":
