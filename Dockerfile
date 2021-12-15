@@ -10,7 +10,7 @@ RUN chmod +x entrypoint.sh
 RUN chmod +x launch_job.py
 RUN chmod +x prepare_extra_vars.py
 
-COPY ./../app /app
+VOLUME ./../app /app
 RUN echo $(ls .)
 
 RUN pip install requests
