@@ -19,7 +19,5 @@ export TOWER_USER=$6
 export TOWER_PASSWORD=$7
 export TOWER_TIMEOUT=$8
 
-ls /github/workspace/app/
-
 /prepare_extra_vars.py
 /launch_job.py

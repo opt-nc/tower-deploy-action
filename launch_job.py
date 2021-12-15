@@ -112,8 +112,8 @@ def main():
         except requests.exceptions.ConnectionError as msg:
             sys.stderr.write(f"ERROR : Impossible to connect to Tower at {tower_url} :\n{msg}\n")
             return -3
-    sys.stderr.write(("ERROR : Environnement variables TOWER_URL, OPT_TOWER_USER,"
-                      " OPT_TOWER_PASSWORD and TOWER_TEMPLATE_ID must be defined.\n"))
+    sys.stderr.write(("ERROR : Environnement variables TOWER_URL, TOWER_USER,"
+                      " TOWER_PASSWORD and TOWER_TEMPLATE_ID must be defined.\n"))
     return -4
 
 if __name__ == "__main__":

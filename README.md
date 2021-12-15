@@ -8,14 +8,14 @@ It connects to a Tower server and launches a job based on a template id, if need
 
 See [action.yml](action.yml)
 
-If you need extra_vars, you have to first to checkout the repository you aim to deploy. 
-You have to put the templated yaml file in the src/main/resource folder. 
+If you need extra_vars data, you have to first checkout the repository you aim to deploy and that contains the extra_vars yaml file template. 
+The templated yaml file have to be put in the *src/main/resource* folder. 
 Default filename is *tower_extra_vars_template.yml*, if you want to use another filename, please use *extravars_template_filename* input.
 
 ### Deploy an application from main branch
 
 ```yaml
-  call-deploy-action:
+  integration-deploy:
     name: Call deploy action
     runs-on: ubuntu-latest
     environment: integration
@@ -40,7 +40,7 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
 ### Deploy an application from tag
 
 ```yaml
-  call-deploy-action:
+  qualification-deploy:
     name: Call deploy action
     runs-on: ubuntu-latest
     environment: qualification
