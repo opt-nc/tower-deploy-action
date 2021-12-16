@@ -1,6 +1,10 @@
 # action.yml
 name: 'Deploy with Tower Ansible'
 description: 'Deploy application thanks Tower Ansible'
+branding :
+  icon : 'zap'
+  color : 'red'
+
 inputs:
   extravars_template_filename:
     description: "Fichier yaml templaté contenant les extra_vars"
