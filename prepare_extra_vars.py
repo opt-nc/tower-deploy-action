@@ -46,7 +46,8 @@ sys.stdout.write(f"INFO: Generate EXTRA_VARS file...\n")
 output = replace_words(tempstr, final_var_deploy_dict)
 sys.stdout.write(f"{repr(output)}\n")
 
-writefile = open("tmp_extra_vars.txt", 'w+')
+extra_vars_file = os.environ.get("EXTRA_VARS_FILE")
+writefile = open(extra_vars_file, 'w+')
 writefile.write(output)
 writefile.close()
 
