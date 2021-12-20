@@ -37,7 +37,7 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
-    EXTRA_VARS_TEMPLATE_FILENAME: ${{GITHUB_WORKSPACE}}${{ inputs.extravars_template_filename }}
+    EXTRA_VARS_TEMPLATE_FILENAME: ${{ env.GITHUB_WORKSPACE }}${{ inputs.extravars_template_filename }}
     ARTIFACT_URL: ${{ inputs.asset_url }}
     SECRETS_CONTEXT: ${{ inputs.vars }} 
     TOWER_TEMPLATE_ID: ${{ inputs.tower_template_id }}
