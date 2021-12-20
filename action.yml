@@ -37,11 +37,11 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
-    EXTRA_VARS_TEMPLATE_FILENAME: ${{ inputs.extravars_template_filename }}
+    EXTRA_VARS_TEMPLATE_FILENAME: ${{GITHUB_WORKSPACE}}${{ inputs.extravars_template_filename }}
     ARTIFACT_URL: ${{ inputs.asset_url }}
     SECRETS_CONTEXT: ${{ inputs.vars }} 
     TOWER_TEMPLATE_ID: ${{ inputs.tower_template_id }}
-    EXTRA_VARS_FILE: tmp_extra_vars.txt
+    EXTRA_VARS_FILE: ${{GITHUB_WORKSPACE}}/tmp_extra_vars.txt
     TOWER_URL: ${{ inputs.tower_url }}
     TOWER_USER: ${{ inputs.tower_user }}
     TOWER_PASSWORD: ${{ inputs.tower_password }}

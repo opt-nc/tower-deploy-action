@@ -10,11 +10,6 @@ RUN chmod +x entrypoint.sh
 RUN chmod +x launch_job.py
 RUN chmod +x prepare_extra_vars.py
 
-# Répertoire contenant le source de l'application à déployer
-# Permet de récuperer le fichier templaté des extra_vars contenu dans src/main/resources
-VOLUME ./../app /app
-WORKDIR /app
-
 RUN pip install requests
 
 # Code file to execute when the docker container starts up (`entrypoint.sh`)
