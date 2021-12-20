@@ -19,11 +19,16 @@ def prepare_secrets_list(vars_dict):
   
 # récupération des secrets Github dans l'environnement
 tmp_var_deploy = os.environ.get("SECRETS_CONTEXT")
+sys.stdout.write(tmp_var_deploy)
+
 tmp_var_deploy_dict = json.loads(tmp_var_deploy)
 sys.stdout.write(f"INFO: Environment variables processing...\n")
 
 # ajout des variables du job dans l'environnement
 tmp_var_deploy_dict["ARTIFACT_URL"] = os.environ.get("ARTIFACT_URL")
+
+# Tower workaround to force restart
+tmp_var_deploy_dict["GITHUB_RUN_ID"] = os.environ.get("GITHUB_RUN_ID")
 
 # récupération du nom du tempate extra_vars
 sys.stdout.write(f"INFO: YAML file template processing...\n")
