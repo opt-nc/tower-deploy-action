@@ -9,7 +9,7 @@ inputs:
   extravars_template_filename:
     description: "Fichier yaml templaté contenant les extra_vars"
     required: true
-    default: 'tower_extra_vars_template.yml'
+    default: 'src/main/resources/tower_extra_vars_template.yml'
   vars:
     description: "Liste des variables (json) qui seront utilisées dans le template"
     required: true
