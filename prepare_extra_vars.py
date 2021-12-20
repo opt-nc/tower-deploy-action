@@ -19,8 +19,6 @@ def prepare_secrets_list(vars_dict):
   
 # récupération des secrets Github dans l'environnement
 tmp_var_deploy = os.environ.get("SECRETS_CONTEXT")
-sys.stdout.write(tmp_var_deploy)
-
 tmp_var_deploy_dict = json.loads(tmp_var_deploy)
 sys.stdout.write(f"INFO: Environment variables processing...\n")
 
