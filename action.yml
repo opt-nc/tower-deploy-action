@@ -36,13 +36,15 @@ inputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
-  args:
-    - ${{ inputs.extravars_template_filename }}
-    - ${{ inputs.vars }}
-    - ${{ inputs.asset_url }}
-    - ${{ inputs.tower_template_id }}
-    - ${{ inputs.tower_url }}
-    - ${{ inputs.tower_user }}
-    - ${{ inputs.tower_password }}
-    - ${{ inputs.tower_timeout }}
+  env:
+    EXTRA_VARS_TEMPLATE_FILENAME: ${{ inputs.extravars_template_filename }}
+    ARTIFACT_URL: ${{ inputs.asset_url }}
+    SECRETS_CONTEXT: ${{ inputs.vars }} 
+    TOWER_TEMPLATE_ID: ${{ inputs.tower_template_id }}
+    EXTRA_VARS_FILE: tmp_extra_vars.txt
+    TOWER_URL: ${{ inputs.tower_url }}
+    TOWER_USER: ${{ inputs.tower_user }}
+    TOWER_PASSWORD: ${{ inputs.tower_password }}
+    TOWER_TIMEOUT: ${{ inputs.tower_timeout }}
+
 
