@@ -15,6 +15,7 @@ RUN chmod +x prepare_extra_vars.py
 VOLUME ./../app /app
 
 RUN pip install requests
+RUN apt install jq
 
 # Code file to execute when the docker container starts up (`entrypoint.sh`)
 ENTRYPOINT ["/entrypoint.sh"]
