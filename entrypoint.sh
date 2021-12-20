@@ -20,7 +20,7 @@ export TOWER_PASSWORD=$7
 export TOWER_TIMEOUT=$8
 
 # fix double quote secret value
-SECRETS_CONTEXT=$(echo $SECRETS_CONTEXT | sed -s 's,\\\\",\\\",g')
+SECRETS_CONTEXT=$(echo $SECRETS_CONTEXT | sed 's,\\\\",\\\",g')
 
 /prepare_extra_vars.py
 /launch_job.py
