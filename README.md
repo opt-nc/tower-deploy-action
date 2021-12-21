@@ -22,14 +22,10 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
     steps:
       - name: Checkout my repo
         uses: actions/checkout@v2
-        with:
-          path: ./app
       - name: Invoke deploy action
-        env:
-          SECRETS_CONTEXT: ${{ tojson(secrets) }}
-        uses: ./tower-deploy-action
+        uses: opt-nc/tower-deploy-action@v1.1.0
         with:
-          vars: ${{ env.SECRETS_CONTEXT }}
+          vars: ${{ tojson(secrets) }}
           asset_url:  https://github.com/my_org/my_repo/releases/download/integration/my_app.jar
           tower_template_id : 45
           tower_url: ${{ secrets.TOWER_URL }}
@@ -47,15 +43,11 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
     steps:
       - name: Checkout my repo
         uses: actions/checkout@v2
-        with:
-          path: ./app
           ref: 1.0.0
       - name: Invoke deploy action
-        env:
-          SECRETS_CONTEXT: ${{ tojson(secrets) }}
-        uses: ./tower-deploy-action
+        uses: opt-nc/tower-deploy-action@v1.1.0
         with:
-          vars: ${{ env.SECRETS_CONTEXT }}
+          vars: ${{ tojson(secrets) }}
           asset_url:  https://github.com/my_org/my_repo/releases/download/1.0.0/my_app.jar
           tower_template_id : 46
           tower_url: ${{ secrets.TOWER_URL }}
