@@ -1,3 +1,4 @@
+[![DEV.to](https://img.shields.io/badge/DEV.to%20posts-Speeding%20Up%20Time%20to%20Market%20with%20Custom%20Github%20Actions-blue)](https://dev.to/adriens/speeding-up-time-to-market-with-custom-github-actions-3md0)
 # tower-deploy-action
 
 This Github action aims to interact with Tower servers.
