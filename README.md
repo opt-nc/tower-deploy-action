@@ -55,3 +55,11 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
           tower_password: ${{ secrets.TOWER_PASSWORD }}
           tower_user: ${{ secrets.TOWER_USER }}
 ```
+
+## The Team
+- @tamere-allo-peter as OPS
+- @mbarre as Gh Action developer
+- @Dougniel as Gh Action reviewer
+- @adriens as Product Owner
+
+Many thanks to your contribution.
