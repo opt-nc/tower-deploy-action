@@ -37,7 +37,7 @@ class Tower:
         response = requests.post(f"{self.towerurl}/job_templates/{templateid}/launch/",
                                  auth=self.towerauth)
         
-        sys.stderr.write(f"status code : {response.status_code}")
+        sys.stderr.write(f"status code : {response.status_code}\n")
         if response.status_code == 201:
             return json.loads(response.text).get("job", 0)
         sys.stderr.write(f"ERROR :\n{repr(response.text)}\n")
@@ -78,6 +78,7 @@ class Tower:
                 return False
             if status in ("failed", "cancelled"):
                 return True
+            sys.stderr.write(f"Status unsupported : {status}\n")        
             #else :
             #    pass # ("pending", "waiting", "running")
         sys.stderr.write(f"ERROR : Tower Job #{jobid} was still running after {timeout} seconds\n")
