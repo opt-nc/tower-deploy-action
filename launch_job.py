@@ -17,16 +17,23 @@ Input arguments are taken from environment variables :
 * EXTRA_VARS_FILE : Extra vars file
 """
 
+import logging
 import sys
 import os
 import time
 import json
 import requests
 
-WAITSTEP = 5.0 # seconds between two consecutive checks of the job's status
+WAITSTEP = 5.0  # seconds between two consecutive checks of the job's status
+
+logging.basicConfig(
+    format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 class Tower:
     """A class for Tower servers."""
+
     def __init__(self, url, username, password):
         """Initialize server authentication."""
         self.towerurl = url
@@ -36,28 +43,28 @@ class Tower:
         """Launch a job based on a template id."""
         response = requests.post(f"{self.towerurl}/job_templates/{templateid}/launch/",
                                  auth=self.towerauth)
-        
-        sys.stderr.write(f"status code : {response.status_code}\n")
+
+        logging.info(f"status code : {response.status_code}\n")
         if response.status_code == 201:
             return json.loads(response.text).get("job", 0)
-        sys.stderr.write(f"ERROR :\n{repr(response.text)}\n")
+        logging.error(f"{repr(response.text)}\n")
         return 0
-    
+
     def launch_with_vars(self, templateid, extra_vars_file):
         """Push file content in string """
         t = open(extra_vars_file, 'r')
         extra_vars_string = t.read()
         t.close()
-        
+
         """Launch a job based on a template id."""
-        sys.stdout.write(f"INFO :\n Call job with extra_vars :{repr(extra_vars_string)} \n")
+        logging.info(f"\n Call job with extra_vars :{repr(extra_vars_string)} \n")
         response = requests.post(f"{self.towerurl}/job_templates/{templateid}/launch/",
-                                 auth=self.towerauth, json={"extra_vars":extra_vars_string} )
-        
-        sys.stderr.write(f"status code : {response.status_code}\n")
+                                 auth=self.towerauth, json={"extra_vars": extra_vars_string})
+
+        logging.info(f"status code : {response.status_code}\n")
         if response.status_code == 201:
             return json.loads(response.text).get("job", 0)
-        sys.stderr.write(f"ERROR :\n{repr(response.text)}\n")
+        logging.error(f"{repr(response.text)}\n")
         return 0
 
     def wait(self, jobid):
@@ -69,20 +76,24 @@ class Tower:
         while step < maxsteps:
             time.sleep(WAITSTEP)
             step += 1
-            response = requests.get(f"{self.towerurl}/jobs/{jobid}/", auth=self.towerauth)
+            response = requests.get(
+                f"{self.towerurl}/jobs/{jobid}/", auth=self.towerauth)
             if response.status_code == 404:
-                sys.stderr.write(f"ERROR : Unable to find Tower Job #{jobid}\n")
+                logging.error(
+                    f"Unable to find Tower Job #{jobid}\n")
                 return True
             status = json.loads(response.text).get("status", "unknown")
             if status == "successful":
                 return False
             if status in ("failed", "cancelled"):
                 return True
-            sys.stderr.write(f"Check {step}/{maxsteps} : {status}\n")        
-            #else :
+            logging.info(f"Check {step}/{maxsteps} : {status}\n")
+            # else :
             #    pass # ("pending", "waiting", "running")
-        sys.stderr.write(f"ERROR : Tower Job #{jobid} was still running after {timeout} seconds\n")
+        logging.error(
+            f"Tower Job #{jobid} was still running after {timeout} seconds\n")
         return True
+
 
 def main():
     """Main function."""
@@ -96,26 +107,33 @@ def main():
         try:
             twr = Tower(tower_url, tower_username, tower_password)
             if extra_vars_file:
-               jobid = twr.launch_with_vars(tower_template_id, extra_vars_file)
-               sys.stdout.write(f"INFO : Launch job #{jobid} with extra vars template file : {extra_vars_file}\n")
+                jobid = twr.launch_with_vars(
+                    tower_template_id, extra_vars_file)
+                logging.info(
+                    f"Launch job #{jobid} with extra vars template file : {extra_vars_file}\n")
             else:
-               jobid = twr.launch(tower_template_id)
+                jobid = twr.launch(tower_template_id)
             if jobid > 0:
-                sys.stdout.write(f"INFO : Please wait, Tower Job #{jobid} is running...\n")
+                logging.info(
+                    f"Please wait, Tower Job #{jobid} is running...\n")
                 sys.stdout.flush()
                 jobstatus = twr.wait(jobid)
                 if not jobstatus:
                     return 0
-                sys.stderr.write(f"ERROR : Problem encountered while running Tower Job #{jobid}\n")
+                logging.error(
+                    f"Problem encountered while running Tower Job #{jobid}\n")
                 return -1
-            sys.stderr.write(f"ERROR : Impossible to execute a job based on Tower Template #{tower_template_id}\n")  # pylint: disable=line-too-long
+            logging.error(
+                f"Impossible to execute a job based on Tower Template #{tower_template_id}\n")  # pylint: disable=line-too-long
             return -2
         except requests.exceptions.ConnectionError as msg:
-            sys.stderr.write(f"ERROR : Impossible to connect to Tower at {tower_url} :\n{msg}\n")
+            logging.error(
+                f"Impossible to connect to Tower at {tower_url} :\n{msg}\n")
             return -3
-    sys.stderr.write(("ERROR : Environnement variables TOWER_URL, TOWER_USER,"
+    logging.error(("Environnement variables TOWER_URL, TOWER_USER,"
                       " TOWER_PASSWORD and TOWER_TEMPLATE_ID must be defined.\n"))
     return -4
+
 
 if __name__ == "__main__":
     sys.exit(main())
