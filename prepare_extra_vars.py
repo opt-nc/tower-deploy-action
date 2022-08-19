@@ -3,7 +3,12 @@
 import os
 import json
 import sys
+import logging
 
+logging.basicConfig(
+    format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
   
 def replace_words(base_text, vars_values):
     for key, val in vars_values.items():
@@ -20,7 +25,7 @@ def prepare_secrets_list(vars_dict):
 # récupération des secrets Github dans l'environnement
 tmp_var_deploy = os.environ.get("SECRETS_CONTEXT")
 tmp_var_deploy_dict = json.loads(tmp_var_deploy)
-sys.stdout.write(f"INFO: Environment variables processing...\n")
+logging.info(f"⚙️ Environment variables processing...")
 
 # ajout des variables du job dans l'environnement
 tmp_var_deploy_dict["ARTIFACT_URL"] = os.environ.get("ARTIFACT_URL")
@@ -29,7 +34,7 @@ tmp_var_deploy_dict["ARTIFACT_URL"] = os.environ.get("ARTIFACT_URL")
 tmp_var_deploy_dict["GITHUB_RUN_ID"] = os.environ.get("GITHUB_RUN_ID")
 
 # récupération du nom du tempate extra_vars
-sys.stdout.write(f"INFO: YAML file template processing...\n")
+logging.info(f"⚙️ YAML file template processing...")
 extra_vars_template_file = os.environ.get("EXTRA_VARS_TEMPLATE_FILENAME")
 
 # Open your desired file as 't' and read the lines into string 'tempstr'
@@ -42,9 +47,9 @@ final_var_deploy_dict = prepare_secrets_list(tmp_var_deploy_dict)
 
 # Using the &quot;replace_words&quot; function, we'll pass in our tempstr to be used as the base,
 # and our device_values to be used as replacement.
-sys.stdout.write(f"INFO: Generate EXTRA_VARS file...\n")
+logging.info(f"⚙️ Generate EXTRA_VARS file...")
 output = replace_words(tempstr, final_var_deploy_dict)
-sys.stdout.write(f"{repr(output)}\n")
+logging.info({repr(output)})
 
 extra_vars_file = os.environ.get("EXTRA_VARS_FILE")
 writefile = open(extra_vars_file, 'w+')
