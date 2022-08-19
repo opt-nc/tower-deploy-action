@@ -31,6 +31,7 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 
+
 class Tower:
     """A class for Tower servers."""
 
@@ -44,10 +45,10 @@ class Tower:
         response = requests.post(f"{self.towerurl}/job_templates/{templateid}/launch/",
                                  auth=self.towerauth)
 
-        logging.info(f"status code : {response.status_code}\n")
+        logging.info(f"status code : {response.status_code}")
         if response.status_code == 201:
             return json.loads(response.text).get("job", 0)
-        logging.error(f"{repr(response.text)}\n")
+        logging.error(repr(response.text))
         return 0
 
     def launch_with_vars(self, templateid, extra_vars_file):
@@ -57,14 +58,15 @@ class Tower:
         t.close()
 
         """Launch a job based on a template id."""
-        logging.info(f"\n Call job with extra_vars :{repr(extra_vars_string)} \n")
+        logging.info(
+            f"🚀 Launch job with extra_vars : {repr(extra_vars_string)}")
         response = requests.post(f"{self.towerurl}/job_templates/{templateid}/launch/",
                                  auth=self.towerauth, json={"extra_vars": extra_vars_string})
 
-        logging.info(f"status code : {response.status_code}\n")
         if response.status_code == 201:
             return json.loads(response.text).get("job", 0)
-        logging.error(f"{repr(response.text)}\n")
+        logging.error(
+            f"status code {response.status_code} : {repr(response.text)}")
         return 0
 
     def wait(self, jobid):
@@ -79,19 +81,18 @@ class Tower:
             response = requests.get(
                 f"{self.towerurl}/jobs/{jobid}/", auth=self.towerauth)
             if response.status_code == 404:
-                logging.error(
-                    f"Unable to find Tower Job #{jobid}\n")
+                logging.error(f"❌ Unable to find Tower Job #{jobid}")
                 return True
             status = json.loads(response.text).get("status", "unknown")
             if status == "successful":
                 return False
             if status in ("failed", "cancelled"):
                 return True
-            logging.info(f"Check {step}/{maxsteps} : {status}\n")
+            logging.info(f"⌛️ Check {step}/{maxsteps} : {status}")
             # else :
             #    pass # ("pending", "waiting", "running")
         logging.error(
-            f"Tower Job #{jobid} was still running after {timeout} seconds\n")
+            f"Tower Job #{jobid} was still running after {timeout} seconds")
         return True
 
 
@@ -110,28 +111,27 @@ def main():
                 jobid = twr.launch_with_vars(
                     tower_template_id, extra_vars_file)
                 logging.info(
-                    f"Launch job #{jobid} with extra vars template file : {extra_vars_file}\n")
+                    f"☝️ Launched job {tower_url}/#/jobs/playbook/{jobid} with extra vars template file : {extra_vars_file}")
             else:
                 jobid = twr.launch(tower_template_id)
             if jobid > 0:
-                logging.info(
-                    f"Please wait, Tower Job #{jobid} is running...\n")
+                logging.info(f"⌛️ Please wait, Tower Job #{jobid} is running...")
                 sys.stdout.flush()
                 jobstatus = twr.wait(jobid)
                 if not jobstatus:
                     return 0
                 logging.error(
-                    f"Problem encountered while running Tower Job #{jobid}\n")
+                    f"❌ Problem encountered while running Tower Job {tower_url}/#/jobs/playbook/{jobid}")
                 return -1
             logging.error(
-                f"Impossible to execute a job based on Tower Template #{tower_template_id}\n")  # pylint: disable=line-too-long
+                f"❌ Impossible to execute a job based on Tower Template #{tower_template_id}")  # pylint: disable=line-too-long
             return -2
         except requests.exceptions.ConnectionError as msg:
             logging.error(
-                f"Impossible to connect to Tower at {tower_url} :\n{msg}\n")
+                f"❌ Impossible to connect to Tower at {tower_url} :{msg}")
             return -3
     logging.error(("Environnement variables TOWER_URL, TOWER_USER,"
-                      " TOWER_PASSWORD and TOWER_TEMPLATE_ID must be defined.\n"))
+                   " TOWER_PASSWORD and TOWER_TEMPLATE_ID must be defined."))
     return -4
 
 
