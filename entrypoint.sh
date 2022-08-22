@@ -4,10 +4,9 @@
 
 result=$?
 if [ $result -ne 0 ] ; then
-  echo "ERROR : Deployment failed." ;
-  echo "Check you changes and relaunch, or try to deploy manually" ;
+  echo "$(date "+%F %T.%3N") ERROR    ❌ Deployment failed. Check you changes and relaunch, or try to deploy manually" ;
 else
-  echo "INFO : Automatic deployment succeeded." ;
+  echo "$(date "+%F %T.%3N") INFO     ✅ Automatic deployment succeeded." ;
 fi ;
 
 exit $result
