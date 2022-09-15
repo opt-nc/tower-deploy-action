@@ -29,6 +29,7 @@ logging.info(f"⚙️ Environment variables processing...")
 
 # ajout des variables du job dans l'environnement
 tmp_var_deploy_dict["ARTIFACT_URL"] = os.environ.get("ARTIFACT_URL")
+tmp_var_deploy_dict["IMAGE_URL"] = os.environ.get("IMAGE_URL")
 
 # Tower workaround to force restart
 tmp_var_deploy_dict["GITHUB_RUN_ID"] = os.environ.get("GITHUB_RUN_ID")

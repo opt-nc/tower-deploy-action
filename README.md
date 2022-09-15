@@ -46,10 +46,33 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
         uses: actions/checkout@v2
           ref: 1.0.0
       - name: Invoke deploy action
-        uses: opt-nc/tower-deploy-action@v1.1.0
+        uses: opt-nc/tower-deploy-action@v1.2.0
         with:
           vars: ${{ tojson(secrets) }}
           asset_url:  https://github.com/my_org/my_repo/releases/download/1.0.0/my_app.jar
+          tower_template_id : 46
+          tower_url: ${{ secrets.TOWER_URL }}
+          tower_password: ${{ secrets.TOWER_PASSWORD }}
+          tower_user: ${{ secrets.TOWER_USER }}
+```
+
+Version de déploiement Docker : 
+
+
+```yaml
+  qualification-deploy:
+    name: Call deploy action
+    runs-on: ubuntu-latest
+    environment: qualification
+    steps:
+      - name: Checkout my repo
+        uses: actions/checkout@v2
+          ref: 1.0.0
+      - name: Invoke deploy action
+        uses: opt-nc/tower-deploy-action@v1.2.0
+        with:
+          vars: ${{ tojson(secrets) }}
+          iamge_url: ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
           tower_template_id : 46
           tower_url: ${{ secrets.TOWER_URL }}
           tower_password: ${{ secrets.TOWER_PASSWORD }}
