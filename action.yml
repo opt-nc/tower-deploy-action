@@ -14,8 +14,11 @@ inputs:
     description: "Liste des variables (json) qui seront utilisées dans le template"
     required: true
   asset_url:
-    description: "Url de l'asset à déployer"
-    required: true
+    description: "Url de l'asset à déployer (image_url ou asset_url doit être spécifié)"
+    required: false
+  image_url:
+    description: "Nom de l'image Docker (image_url ou asset_url doit être spécifié)"
+    required: false
   tower_template_id:
     description: "Identifiant du template Tower"
     required: true
@@ -47,5 +50,3 @@ runs:
     TOWER_USER: ${{ inputs.tower_user }}
     TOWER_PASSWORD: ${{ inputs.tower_password }}
     TOWER_TIMEOUT: ${{ inputs.tower_timeout }}
-
-
