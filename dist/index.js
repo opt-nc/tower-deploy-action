@@ -25,13 +25,14 @@ module.exports = async function () {
       .readFileSync(varsFilename)
       .toString()
       .replace(/\$(\w+)/g, (m, p1) => (p1 in values ? values[p1] : p1));
-    core.info(`⚙️ EXTRA_VARS file evaluated :\n ${vars}`);
 
     // launch Tower by a rest API
     const towerTemplateId = core.getInput('tower_template_id');
     const towerUrl = core.getInput('tower_url');
     const auth = { username: core.getInput('tower_user'), password: core.getInput('tower_password') };
 
+    core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${vars}`);
+    
     const response = await axios({
       method: 'POST',
       url: `${towerUrl}/job_templates/${towerTemplateId}/launch/`,
