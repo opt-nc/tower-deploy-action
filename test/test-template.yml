@@ -1,0 +1,5 @@
+self_env: '{
+    "TEST": "$SECRET"
+  }'
+self_id: valeur
+self_image_url: $IMAGE_URL
