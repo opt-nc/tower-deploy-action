@@ -29,8 +29,8 @@ test('a deploy with success', async () => {
     .once()
     .basicAuth(auth)
     .reply(201, { job: 10 });
-  nock('https://tower.test').get('/jobs/10').once().basicAuth(auth).reply(200, { status: 'pending' });
-  nock('https://tower.test').get('/jobs/10').once().basicAuth(auth).reply(200, { status: 'successful' });
+  nock('https://tower.test').get('/jobs/10/').once().basicAuth(auth).reply(200, { status: 'pending' });
+  nock('https://tower.test').get('/jobs/10/').once().basicAuth(auth).reply(200, { status: 'successful' });
 
   // When
   await action();
@@ -57,8 +57,8 @@ test('a failure with tower', async () => {
 
   const auth = { user: 'user', pass: 'password' };
   nock('https://tower.test').post('/job_templates/1/launch/').once().basicAuth(auth).reply(201, { job: 10 });
-  nock('https://tower.test').get('/jobs/10').once().basicAuth(auth).reply(200, { status: 'pending' });
-  nock('https://tower.test').get('/jobs/10').once().basicAuth(auth).reply(200, { status: 'failed' });
+  nock('https://tower.test').get('/jobs/10/').once().basicAuth(auth).reply(200, { status: 'pending' });
+  nock('https://tower.test').get('/jobs/10/').once().basicAuth(auth).reply(200, { status: 'failed' });
 
   // When
   await action();

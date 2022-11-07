@@ -32,7 +32,7 @@ module.exports = async function () {
     const auth = { username: core.getInput('tower_user'), password: core.getInput('tower_password') };
 
     core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${vars}`);
-    
+
     const response = await axios({
       method: 'POST',
       url: `${towerUrl}/job_templates/${towerTemplateId}/launch/`,
@@ -48,7 +48,7 @@ module.exports = async function () {
     let step = 0;
     while (step < maxsteps) {
       await setTimeout(WAITSTEP * 1000);
-      const res = await axios({ url: `${towerUrl}/jobs/${jobId}`, auth });
+      const res = await axios({ url: `${towerUrl}/jobs/${jobId}/`, auth });
 
       if (res.data.status === 'successful') {
         break;
