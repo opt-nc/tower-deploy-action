@@ -21,7 +21,10 @@ module.exports = async function () {
       GITHUB_RUN_ID: process.env.GITHUB_RUN_ID, // Tower workaround to force restart
     };
     const varsFilename = core.getInput('extravars_template_filename');
-    const vars = fs.readFileSync(varsFilename).toString().replace('$(\\W)', v => (v in values ? values[v] : v));
+    const vars = fs
+      .readFileSync(varsFilename)
+      .toString()
+      .replace(/\$(\w+)/g, (m, p1) => (p1 in values ? values[p1] : p1));
     core.info(`⚙️ EXTRA_VARS file evaluated :\n ${vars}`);
 
     // launch Tower by a rest API
@@ -45,7 +48,7 @@ module.exports = async function () {
     while (step < maxsteps) {
       await setTimeout(WAITSTEP * 1000);
       const res = await axios({ url: `${towerUrl}/jobs/${jobId}`, auth });
-      
+
       if (res.data.status === 'successful') {
         break;
       } else if (res.data.status === 'failed' || res.data.status === 'cancelled') {
@@ -58,7 +61,7 @@ module.exports = async function () {
       step++;
     }
 
-    core.info(`✅ Automatic deployment succeeded.`)
+    core.info(`✅ Automatic deployment succeeded.`);
   } catch (error) {
     if (error.response && error.response.status === 401) {
       core.setFailed('HTTP 401 : maybe you have to check tower_ser/tower_password inputs ?');
