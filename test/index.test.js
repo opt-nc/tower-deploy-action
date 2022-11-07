@@ -47,7 +47,6 @@ test('a failure with tower', async () => {
   };
   jest.spyOn(core, 'getInput').mockImplementation(n => inputs[n]);
 
-  const info = jest.spyOn(core, 'info');
   const setFailed = jest.spyOn(core, 'setFailed');
 
   const auth = { user: 'user', pass: 'password' };
@@ -75,7 +74,6 @@ test('a failure with parameters', async () => {
   };
   jest.spyOn(core, 'getInput').mockImplementation(n => inputs[n]);
 
-  const info = jest.spyOn(core, 'info');
   const setFailed = jest.spyOn(core, 'setFailed');
 
   const auth = { user: 'user', pass: 'password' };

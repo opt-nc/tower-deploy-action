@@ -1,6 +1,6 @@
 const core = require('@actions/core');
 const fs = require('fs');
-var axios = require('axios');
+const axios = require('axios');
 const { setTimeout } = require('timers/promises');
 
 module.exports = async function () {
@@ -35,7 +35,7 @@ module.exports = async function () {
 
     // poll waiting until the end of job in order to know if it will succed or not
     const maxsteps = (core.getInput('tower_timeout') || 300) / WAITSTEP;
-    var step = 0;
+    let step = 0;
     while (step < maxsteps) {
       await setTimeout(WAITSTEP * 1000);
       const res = await axios({ url: `${towerUrl}/jobs/${jobId}`, auth });
@@ -44,7 +44,7 @@ module.exports = async function () {
         break;
       } else if (res.data.status === 'failed' || res.data.status === 'cancelled') {
         core.error(`❌ Deployment failed (${res.data.status}) ${towerUrl}/#/jobs/playbook/${jobId}`);
-        core.setFailed(error.response.data);
+        core.setFailed(res.data);
         return -1;
       }
       core.info(`⌛️ Check ${step}/${maxsteps} : ${res.data.status}`);
