@@ -6394,7 +6394,7 @@ module.exports = require("zlib");
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
-// Axios v1.6.6 Copyright (c) 2024 Matt Zabriskie and contributors
+// Axios v1.6.7 Copyright (c) 2024 Matt Zabriskie and contributors
 
 
 const FormData$1 = __nccwpck_require__(4334);
@@ -7850,9 +7850,6 @@ const defaults = {
     const isFormData = utils$1.isFormData(data);
 
     if (isFormData) {
-      if (!hasJSONContentType) {
-        return data;
-      }
       return hasJSONContentType ? JSON.stringify(formDataToJSON(data)) : data;
     }
 
@@ -8418,7 +8415,7 @@ function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 }
 
-const VERSION = "1.6.6";
+const VERSION = "1.6.7";
 
 function parseProtocol(url) {
   const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
@@ -10270,17 +10267,20 @@ class Axios {
     try {
       return await this._request(configOrUrl, config);
     } catch (err) {
-      const dummy = {};
-      if (Error.captureStackTrace) {
-        Error.captureStackTrace(dummy);
-      } else {
-        dummy.stack = new Error().stack;
-      }
-      // slice off the Error: ... line
-      dummy.stack = dummy.stack.replace(/^.+\n/, '');
-      // match without the 2 top stack lines
-      if (!err.stack.endsWith(dummy.stack.replace(/^.+\n.+\n/, ''))) {
-        err.stack += '\n' + dummy.stack;
+      if (err instanceof Error) {
+        let dummy;
+
+        Error.captureStackTrace ? Error.captureStackTrace(dummy = {}) : (dummy = new Error());
+
+        // slice off the Error: ... line
+        const stack = dummy.stack ? dummy.stack.replace(/^.+\n/, '') : '';
+
+        if (!err.stack) {
+          err.stack = stack;
+          // match without the 2 top stack lines
+        } else if (stack && !String(err.stack).endsWith(stack.replace(/^.+\n.+\n/, ''))) {
+          err.stack += '\n' + stack;
+        }
       }
 
       throw err;
