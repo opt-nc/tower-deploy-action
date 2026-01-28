@@ -8,7 +8,7 @@
     "all": "npm run lint && npm run prepare && npm run test"
   },
   "dependencies": {
-    "@actions/core": "^2.0.2",
+    "@actions/core": "^2.0.3",
     "axios": "^1.13.3"
   },
   "devDependencies": {
