@@ -1,29 +1,45 @@
-const nock = require('nock');
-const core = require('@actions/core');
+import { jest, test, expect, beforeEach } from '@jest/globals';
+import nock from 'nock';
 
-jest.spyOn(require('timers/promises'), 'setTimeout').mockImplementation(() => Promise.resolve());
+const mockGetInput = jest.fn<(name: string) => string>();
+const mockInfo = jest.fn<(message: string) => void>();
+const mockError = jest.fn<(message: string | Error) => void>();
+const mockSetFailed = jest.fn<(message: string | Error) => void>();
 
-const action = require('../lib');
+jest.unstable_mockModule('timers/promises', () => ({
+  setTimeout: jest.fn(() => Promise.resolve()),
+}));
+
+jest.unstable_mockModule('@actions/core', () => ({
+  getInput: mockGetInput,
+  info: mockInfo,
+  error: mockError,
+  setFailed: mockSetFailed,
+}));
+
+const { default: action } = await import('../lib');
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  nock.cleanAll();
+});
 
 test('a deploy with success', async () => {
   // Given
-  const inputs = {
+  const inputs: Record<string, string> = {
     vars: '{ "SECRET": "secret" }',
     image_url: 'test:latest',
-    tower_template_id: 1,
+    tower_template_id: '1',
     tower_url: 'https://tower.test',
     tower_user: 'user',
     tower_password: 'password',
     extravars_template_filename: './test/test-template.yml',
   };
-  jest.spyOn(core, 'getInput').mockImplementation(n => inputs[n]);
-
-  const info = jest.spyOn(core, 'info');
-  const setFailed = jest.spyOn(core, 'setFailed');
+  mockGetInput.mockImplementation((n: string) => inputs[n]);
 
   const auth = { user: 'user', pass: 'password' };
   nock('https://tower.test')
-    .post('/job_templates/1/launch/', body => {
+    .post('/job_templates/1/launch/', (body: { extra_vars: string }) => {
       return body.extra_vars === `self_env: '{\n    "TEST": "secret"\n  }'\nself_id: valeur\nself_image_url: test:latest\n`;
     })
     .once()
@@ -36,24 +52,22 @@ test('a deploy with success', async () => {
   await action();
 
   // Then
-  expect(setFailed).toHaveBeenCalledTimes(0);
-  expect(info).toHaveBeenCalled();
+  expect(mockSetFailed).toHaveBeenCalledTimes(0);
+  expect(mockInfo).toHaveBeenCalled();
 });
 
 test('a failure with tower', async () => {
   // Given
-  const inputs = {
+  const inputs: Record<string, string> = {
     vars: '{ "SECRET": "secret" }',
     image_url: 'test:latest',
-    tower_template_id: 1,
+    tower_template_id: '1',
     tower_url: 'https://tower.test',
     tower_user: 'user',
     tower_password: 'password',
     extravars_template_filename: './test/test-template.yml',
   };
-  jest.spyOn(core, 'getInput').mockImplementation(n => inputs[n]);
-
-  const setFailed = jest.spyOn(core, 'setFailed');
+  mockGetInput.mockImplementation((n: string) => inputs[n]);
 
   const auth = { user: 'user', pass: 'password' };
   nock('https://tower.test').post('/job_templates/1/launch/').once().basicAuth(auth).reply(201, { job: 10 });
@@ -64,23 +78,21 @@ test('a failure with tower', async () => {
   await action();
 
   // Then
-  expect(setFailed).toHaveBeenCalled();
+  expect(mockSetFailed).toHaveBeenCalled();
 });
 
 test('a failure with parameters', async () => {
   // Given
-  const inputs = {
+  const inputs: Record<string, string> = {
     vars: '{ "SECRET": "secret" }',
     image_url: 'test:latest',
-    tower_template_id: 1,
+    tower_template_id: '1',
     tower_url: 'https://tower.test',
     tower_user: 'user',
     tower_password: 'password',
     extravars_template_filename: './test/test-template.yml',
   };
-  jest.spyOn(core, 'getInput').mockImplementation(n => inputs[n]);
-
-  const setFailed = jest.spyOn(core, 'setFailed');
+  mockGetInput.mockImplementation((n: string) => inputs[n]);
 
   const auth = { user: 'user', pass: 'password' };
   nock('https://tower.test').post('/job_templates/1/launch/').once().basicAuth(auth).reply(401);
@@ -89,5 +101,5 @@ test('a failure with parameters', async () => {
   await action();
 
   // Then
-  expect(setFailed).toHaveBeenCalled();
+  expect(mockSetFailed).toHaveBeenCalled();
 });
