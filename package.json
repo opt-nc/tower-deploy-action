@@ -2,9 +2,10 @@
   "name": "tower-deploy-action",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint .",
-    "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
-    "test": "jest",
+    "lint": "eslint",
+    "build": "tsc",
+    "prepare": "npm run build && ncc build build/index.js -o dist --source-map --license licenses.txt",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "all": "npm run lint && npm run prepare && npm run test"
   },
   "dependencies": {
@@ -12,9 +13,31 @@
     "axios": "^1.13.4"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.3.3",
     "@vercel/ncc": "^0.38.4",
     "eslint": "^9.39.2",
     "jest": "^30.2.0",
-    "nock": "^14.0.10"
+    "nock": "^14.0.10",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/test"
+    ],
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "useESM": true,
+          "tsconfig": "tsconfig.test.json"
+        }
+      ]
+    }
   }
 }
