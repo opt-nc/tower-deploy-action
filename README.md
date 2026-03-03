@@ -26,7 +26,7 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
       - name: Checkout my repo
         uses: actions/checkout@v2
       - name: Invoke deploy action
-        uses: opt-nc/tower-deploy-action@v1.3.2
+        uses: opt-nc/tower-deploy-action@v1.3.13
         with:
           vars: ${{ tojson(secrets) }}
           asset_url:  https://github.com/my_org/my_repo/releases/download/integration/my_app.jar
@@ -49,7 +49,7 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
         with:
           ref: v1.0.0
       - name: Invoke deploy action
-        uses: opt-nc/tower-deploy-action@v1.3.2
+        uses: opt-nc/tower-deploy-action@v1.3.13
         with:
           vars: ${{ tojson(secrets) }}
           asset_url:  https://github.com/my_org/my_repo/releases/download/1.0.0/my_app.jar
@@ -73,7 +73,7 @@ Version de déploiement Docker :
         with:
           ref: v1.0.0
       - name: Invoke deploy action
-        uses: opt-nc/tower-deploy-action@v1.3.2
+        uses: opt-nc/tower-deploy-action@v1.3.13
         with:
           vars: ${{ tojson(secrets) }}
           iamge_url: ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
