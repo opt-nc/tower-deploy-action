@@ -82,11 +82,3 @@ Version de déploiement Docker :
           tower_password: ${{ secrets.TOWER_PASSWORD }}
           tower_user: ${{ secrets.TOWER_USER }}
 ```
-
-## The Team
-- [@tamere-allo-peter](https://github.com/tamere-allo-peter) as OPS
-- [@mbarre](https://github.com/mbarre) as Gh Action developer
-- [@Dougniel](https://github.com/Dougniel) as Gh Action reviewer
-- [@adriens](https://github.com/adriens) as Product Owner
-
-Many thanks to your contribution.
