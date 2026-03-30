@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
-    "axios": "^1.13.6"
+    "axios": "^1.14.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
