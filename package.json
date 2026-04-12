@@ -10,17 +10,17 @@
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
-    "axios": "^1.13.6"
+    "axios": "^1.15.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.6.0",
     "@vercel/ncc": "^0.38.4",
-    "eslint": "^10.1.0",
+    "eslint": "^10.2.0",
     "jest": "^30.3.0",
-    "nock": "^14.0.11",
-    "ts-jest": "^29.4.6",
-    "typescript": "^5.9.3"
+    "nock": "^14.0.12",
+    "ts-jest": "^29.4.9",
+    "typescript": "^6.0.2"
   },
   "jest": {
     "testEnvironment": "node",
