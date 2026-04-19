@@ -20,7 +20,7 @@
     "jest": "^30.3.0",
     "nock": "^14.0.12",
     "ts-jest": "^29.4.9",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   },
   "jest": {
     "testEnvironment": "node",
