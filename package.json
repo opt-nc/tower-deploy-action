@@ -9,7 +9,7 @@
     "all": "npm run lint && npm run prepare && npm run test"
   },
   "dependencies": {
-    "@actions/core": "^3.0.0",
+    "@actions/core": "^3.0.1",
     "axios": "^1.15.1"
   },
   "devDependencies": {
