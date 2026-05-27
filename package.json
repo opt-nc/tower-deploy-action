@@ -9,16 +9,16 @@
     "all": "npm run lint && npm run prepare && npm run test"
   },
   "dependencies": {
-    "@actions/core": "^3.0.0",
-    "axios": "^1.15.1"
+    "@actions/core": "^3.0.1",
+    "axios": "^1.16.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.1",
     "@vercel/ncc": "^0.38.4",
-    "eslint": "^10.2.1",
-    "jest": "^30.3.0",
-    "nock": "^14.0.12",
+    "eslint": "^10.4.0",
+    "jest": "^30.4.2",
+    "nock": "^14.0.15",
     "ts-jest": "^29.4.9",
     "typescript": "^6.0.3"
   },
