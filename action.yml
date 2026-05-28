@@ -20,8 +20,11 @@ inputs:
     description: "Nom de l'image Docker (image_url ou asset_url doit être spécifié)"
     required: false
   tower_template_id:
-    description: "Identifiant du template Tower"
-    required: true
+    description: "Identifiant numérique du template Tower (exclusif avec tower_template_name)"
+    required: false
+  tower_template_name:
+    description: "Nom du template Tower, ex: 'containers/apps integration' (exclusif avec tower_template_id)"
+    required: false
   tower_url:
     description: "Url de Tower"
     required: true

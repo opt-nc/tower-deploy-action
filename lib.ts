@@ -22,14 +22,26 @@ export default async function action(): Promise<number | void> {
 
     // launch Tower by a rest API
     const towerTemplateId = core.getInput('tower_template_id');
+    const towerTemplateName = core.getInput('tower_template_name');
     const towerUrl = core.getInput('tower_url');
     const auth = { username: core.getInput('tower_user'), password: core.getInput('tower_password') };
 
-    core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${vars}`);
+    if (!towerTemplateId && !towerTemplateName) {
+      core.setFailed('❌ You must provide either tower_template_id or tower_template_name.');
+      return -1;
+    }
+    if (towerTemplateId && towerTemplateName) {
+      core.setFailed('❌ tower_template_id and tower_template_name are mutually exclusive: provide only one.');
+      return -1;
+    }
+
+    const templateSegment = towerTemplateName ? encodeURIComponent(towerTemplateName) : towerTemplateId;
+
+    core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${templateSegment}/launch :\n${vars}`);
 
     const response = await axios({
       method: 'POST',
-      url: `${towerUrl}/job_templates/${towerTemplateId}/launch/`,
+      url: `${towerUrl}/job_templates/${templateSegment}/launch/`,
       auth,
       data: vars ? { extra_vars: vars } : undefined,
     });

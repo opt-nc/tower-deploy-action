@@ -30,6 +30,7 @@ test('a deploy with success', async () => {
     vars: '{ "SECRET": "secret" }',
     image_url: 'test:latest',
     tower_template_id: '1',
+    tower_template_name: '',
     tower_url: 'https://tower.test',
     tower_user: 'user',
     tower_password: 'password',
@@ -62,6 +63,7 @@ test('a failure with tower', async () => {
     vars: '{ "SECRET": "secret" }',
     image_url: 'test:latest',
     tower_template_id: '1',
+    tower_template_name: '',
     tower_url: 'https://tower.test',
     tower_user: 'user',
     tower_password: 'password',
@@ -87,6 +89,7 @@ test('a failure with parameters', async () => {
     vars: '{ "SECRET": "secret" }',
     image_url: 'test:latest',
     tower_template_id: '1',
+    tower_template_name: '',
     tower_url: 'https://tower.test',
     tower_user: 'user',
     tower_password: 'password',
@@ -103,3 +106,76 @@ test('a failure with parameters', async () => {
   // Then
   expect(mockSetFailed).toHaveBeenCalled();
 });
+
+test('a deploy with success using tower_template_name', async () => {
+  // Given
+  const inputs: Record<string, string> = {
+    vars: '{ "SECRET": "secret" }',
+    image_url: 'test:latest',
+    tower_template_id: '',
+    tower_template_name: 'containers/apps integration',
+    tower_url: 'https://tower.test',
+    tower_user: 'user',
+    tower_password: 'password',
+    extravars_template_filename: './test/test-template.yml',
+  };
+  mockGetInput.mockImplementation((n: string) => inputs[n]);
+
+  const auth = { user: 'user', pass: 'password' };
+  nock('https://tower.test')
+    .post('/job_templates/containers%2Fapps%20integration/launch/')
+    .once()
+    .basicAuth(auth)
+    .reply(201, { job: 20 });
+  nock('https://tower.test').get('/jobs/20/').once().basicAuth(auth).reply(200, { status: 'successful' });
+
+  // When
+  await action();
+
+  // Then
+  expect(mockSetFailed).toHaveBeenCalledTimes(0);
+  expect(mockInfo).toHaveBeenCalled();
+});
+
+test('fails when neither tower_template_id nor tower_template_name is provided', async () => {
+  // Given
+  const inputs: Record<string, string> = {
+    vars: '{ "SECRET": "secret" }',
+    image_url: 'test:latest',
+    tower_template_id: '',
+    tower_template_name: '',
+    tower_url: 'https://tower.test',
+    tower_user: 'user',
+    tower_password: 'password',
+    extravars_template_filename: './test/test-template.yml',
+  };
+  mockGetInput.mockImplementation((n: string) => inputs[n]);
+
+  // When
+  await action();
+
+  // Then
+  expect(mockSetFailed).toHaveBeenCalledWith('❌ You must provide either tower_template_id or tower_template_name.');
+});
+
+test('fails when both tower_template_id and tower_template_name are provided', async () => {
+  // Given
+  const inputs: Record<string, string> = {
+    vars: '{ "SECRET": "secret" }',
+    image_url: 'test:latest',
+    tower_template_id: '1',
+    tower_template_name: 'containers/apps integration',
+    tower_url: 'https://tower.test',
+    tower_user: 'user',
+    tower_password: 'password',
+    extravars_template_filename: './test/test-template.yml',
+  };
+  mockGetInput.mockImplementation((n: string) => inputs[n]);
+
+  // When
+  await action();
+
+  // Then
+  expect(mockSetFailed).toHaveBeenCalledWith('❌ tower_template_id and tower_template_name are mutually exclusive: provide only one.');
+});
+

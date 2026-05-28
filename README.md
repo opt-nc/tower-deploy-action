@@ -5,7 +5,7 @@
 
 This Github action aims to interact with Tower servers.
 
-It connects to a Tower server and launches a job based on a template id, if needed an extra_vars file can be send.
+It connects to a Tower server and launches a job based on a template id **or name** (mutually exclusive), if needed an extra_vars file can be send.
 
 ## Usage
 
@@ -15,7 +15,7 @@ If you need extra_vars data, you have to first checkout the repository you aim t
 The templated yaml file have to be put in the *src/main/resource* folder. 
 Default filename is *tower_extra_vars_template.yml*, if you want to use another filename, please use *extravars_template_filename* input.
 
-### Deploy an application from main branch
+### Deploy an application from main branch (via template ID)
 
 ```yaml
   integration-deploy:
@@ -30,11 +30,34 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
         with:
           vars: ${{ tojson(secrets) }}
           asset_url:  https://github.com/my_org/my_repo/releases/download/integration/my_app.jar
-          tower_template_id : 45
+          tower_template_id: 45
           tower_url: ${{ secrets.TOWER_URL }}
           tower_password: ${{ secrets.TOWER_PASSWORD }}
           tower_user: ${{ secrets.TOWER_USER }}
 ```
+
+### Deploy an application from main branch (via template name)
+
+```yaml
+  integration-deploy:
+    name: Call deploy action
+    runs-on: ubuntu-latest
+    environment: integration
+    steps:
+      - name: Checkout my repo
+        uses: actions/checkout@v6
+      - name: Invoke deploy action
+        uses: opt-nc/tower-deploy-action@v2.0.2
+        with:
+          vars: ${{ tojson(secrets) }}
+          asset_url:  https://github.com/my_org/my_repo/releases/download/integration/my_app.jar
+          tower_template_name: containers/apps integration
+          tower_url: ${{ secrets.TOWER_URL }}
+          tower_password: ${{ secrets.TOWER_PASSWORD }}
+          tower_user: ${{ secrets.TOWER_USER }}
+```
+
+> ⚠️ `tower_template_id` and `tower_template_name` are **mutually exclusive**: exactly one must be provided.
 
 ### Deploy an application from tag
 
@@ -53,14 +76,13 @@ Default filename is *tower_extra_vars_template.yml*, if you want to use another 
         with:
           vars: ${{ tojson(secrets) }}
           asset_url:  https://github.com/my_org/my_repo/releases/download/1.0.0/my_app.jar
-          tower_template_id : 46
+          tower_template_id: 46
           tower_url: ${{ secrets.TOWER_URL }}
           tower_password: ${{ secrets.TOWER_PASSWORD }}
           tower_user: ${{ secrets.TOWER_USER }}
 ```
 
-Version de déploiement Docker : 
-
+### Deploy a Docker image from tag
 
 ```yaml
   qualification-deploy:
@@ -76,8 +98,8 @@ Version de déploiement Docker :
         uses: opt-nc/tower-deploy-action@v2.0.2
         with:
           vars: ${{ tojson(secrets) }}
-          iamge_url: ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
-          tower_template_id : 46
+          image_url: ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
+          tower_template_name: containers/apps integration
           tower_url: ${{ secrets.TOWER_URL }}
           tower_password: ${{ secrets.TOWER_PASSWORD }}
           tower_user: ${{ secrets.TOWER_USER }}

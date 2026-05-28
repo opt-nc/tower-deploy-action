@@ -9911,12 +9911,22 @@ async function action() {
             .replace(/\$(\w+)/g, (_m, p1) => (p1 in values ? values[p1] : p1));
         // launch Tower by a rest API
         const towerTemplateId = getInput('tower_template_id');
+        const towerTemplateName = getInput('tower_template_name');
         const towerUrl = getInput('tower_url');
         const auth = { username: getInput('tower_user'), password: getInput('tower_password') };
-        info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${vars}`);
+        if (!towerTemplateId && !towerTemplateName) {
+            setFailed('❌ You must provide either tower_template_id or tower_template_name.');
+            return -1;
+        }
+        if (towerTemplateId && towerTemplateName) {
+            setFailed('❌ tower_template_id and tower_template_name are mutually exclusive: provide only one.');
+            return -1;
+        }
+        const templateSegment = towerTemplateName ? encodeURIComponent(towerTemplateName) : towerTemplateId;
+        info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${templateSegment}/launch :\n${vars}`);
         const response = await lib_axios({
             method: 'POST',
-            url: `${towerUrl}/job_templates/${towerTemplateId}/launch/`,
+            url: `${towerUrl}/job_templates/${templateSegment}/launch/`,
             auth,
             data: vars ? { extra_vars: vars } : undefined,
         });
