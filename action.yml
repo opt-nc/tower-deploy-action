@@ -26,11 +26,11 @@ inputs:
     description: "Url de Tower"
     required: true
   tower_user:
-    description: "Identifiant utilisé pour le déploiement"
-    required: true
+    description: "Identifiant utilisé pour le déploiement (tower_user et tower_password doivent être définis ensemble, ou utiliser tower_x_api_key à la place)"
   tower_password:
-    description: "Mot de passe utilisé pour le déploiement"
-    required: true
+    description: "Mot de passe utilisé pour le déploiement (tower_user et tower_password doivent être définis ensemble, ou utiliser tower_x_api_key à la place)"
+  tower_x_api_key:
+    description: "Clé API utilisée pour le déploiement (alternative à tower_user + tower_password)"
   tower_timeout:
     description: "Délai avant coupure de la connexion"
     required: true

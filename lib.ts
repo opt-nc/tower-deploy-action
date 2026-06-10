@@ -23,7 +23,24 @@ export default async function action(): Promise<number | void> {
     // launch Tower by a rest API
     const towerTemplateId = core.getInput('tower_template_id');
     const towerUrl = core.getInput('tower_url');
-    const auth = { username: core.getInput('tower_user'), password: core.getInput('tower_password') };
+    const towerUser = core.getInput('tower_user');
+    const towerPassword = core.getInput('tower_password');
+    const towerApiKey = core.getInput('tower_x_api_key');
+
+    const hasApiKey = !!towerApiKey;
+    const hasUserPass = !!(towerUser || towerPassword);
+
+    if (hasApiKey && hasUserPass) {
+      core.setFailed('Vous devez définir soit tower_x_api_key, soit tower_user + tower_password, mais pas les deux en même temps.');
+      return -1;
+    }
+    if (!hasApiKey && !hasUserPass) {
+      core.setFailed('Vous devez définir soit tower_x_api_key, soit tower_user + tower_password.');
+      return -1;
+    }
+
+    const auth = hasApiKey ? undefined : { username: towerUser, password: towerPassword };
+    const headers = hasApiKey ? { Authorization: `Bearer ${towerApiKey}` } : undefined;
 
     core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${vars}`);
 
@@ -31,6 +48,7 @@ export default async function action(): Promise<number | void> {
       method: 'POST',
       url: `${towerUrl}/job_templates/${towerTemplateId}/launch/`,
       auth,
+      headers,
       data: vars ? { extra_vars: vars } : undefined,
     });
 
@@ -42,7 +60,7 @@ export default async function action(): Promise<number | void> {
     let step = 0;
     while (step < maxsteps) {
       await setTimeout(WAITSTEP * 1000);
-      const res = await axios({ url: `${towerUrl}/jobs/${jobId}/`, auth });
+      const res = await axios({ url: `${towerUrl}/jobs/${jobId}/`, auth, headers });
 
       if (res.data.status === 'successful') {
         break;
