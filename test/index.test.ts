@@ -93,11 +93,11 @@ test('a deploy with success using api key', async () => {
   };
   mockGetInput.mockImplementation((n: string) => inputs[n] ?? '');
 
-  nock('https://tower.test', { reqheaders: { authorization: 'Bearer my-api-key' } })
+  nock('https://tower.test', { reqheaders: { 'x-apikey': 'my-api-key' } })
     .post('/job_templates/1/launch/')
     .once()
     .reply(201, { job: 10 });
-  nock('https://tower.test', { reqheaders: { authorization: 'Bearer my-api-key' } })
+  nock('https://tower.test', { reqheaders: { 'x-apikey': 'my-api-key' } })
     .get('/jobs/10/')
     .once()
     .reply(200, { status: 'successful' });

@@ -40,7 +40,7 @@ export default async function action(): Promise<number | void> {
     }
 
     const auth = hasApiKey ? undefined : { username: towerUser, password: towerPassword };
-    const headers = hasApiKey ? { Authorization: `Bearer ${towerApiKey}` } : undefined;
+    const headers = hasApiKey ? { 'x-apikey': towerApiKey } : undefined;
 
     core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${vars}`);
 
