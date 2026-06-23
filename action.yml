@@ -12,7 +12,7 @@ inputs:
     default: 'src/main/resources/tower_extra_vars_template.yml'
   vars:
     description: "Liste des variables (json) qui seront utilisées dans le template"
-    required: true
+    required: false
   asset_url:
     description: "Url de l'asset à déployer (image_url ou asset_url doit être spécifié)"
     required: false

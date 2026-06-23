@@ -10237,16 +10237,20 @@ async function action() {
     const WAITSTEP = 5; // seconds between two consecutive checks of the job's status
     try {
         // eval expression "$VAR" on extravars template file
-        const values = {
-            ...JSON.parse(getInput('vars')),
-            ARTIFACT_URL: getInput('asset_url'),
-            IMAGE_URL: getInput('image_url'),
-            GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart
-        };
-        const varsFilename = getInput('extravars_template_filename');
-        const vars = external_fs_.readFileSync(varsFilename)
-            .toString()
-            .replace(/\$(\w+)/g, (_m, p1) => (p1 in values ? values[p1] : p1));
+        const varsInput = getInput('vars');
+        let extra_vars;
+        if (varsInput) {
+            const values = {
+                ...JSON.parse(varsInput),
+                ARTIFACT_URL: getInput('asset_url'),
+                IMAGE_URL: getInput('image_url'),
+                GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart
+            };
+            const varsFilename = getInput('extravars_template_filename');
+            extra_vars = external_fs_.readFileSync(varsFilename)
+                .toString()
+                .replace(/\$(\w+)/g, (_m, p1) => (p1 in values ? values[p1] : p1));
+        }
         // launch Tower by a rest API
         const towerTemplateId = getInput('tower_template_id');
         const towerUrl = getInput('tower_url');
@@ -10265,13 +10269,13 @@ async function action() {
         }
         const auth = hasApiKey ? undefined : { username: towerUser, password: towerPassword };
         const headers = hasApiKey ? { 'x-apikey': towerApiKey } : undefined;
-        info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${vars}`);
+        info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${extra_vars}`);
         const response = await lib_axios({
             method: 'POST',
             url: `${towerUrl}/job_templates/${towerTemplateId}/launch/`,
             auth,
             headers,
-            data: vars ? { extra_vars: vars } : undefined,
+            data: extra_vars ? { extra_vars } : undefined,
         });
         const jobId = response.data.job;
         info(`🚀 Deploy job launched ${towerUrl}/#/jobs/playbook/${jobId}`);

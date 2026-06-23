@@ -8,17 +8,21 @@ export default async function action(): Promise<number | void> {
 
   try {
     // eval expression "$VAR" on extravars template file
-    const values: Record<string, string> = {
-      ...JSON.parse(core.getInput('vars')),
-      ARTIFACT_URL: core.getInput('asset_url'),
-      IMAGE_URL: core.getInput('image_url'),
-      GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart
-    };
-    const varsFilename = core.getInput('extravars_template_filename');
-    const vars = fs
-      .readFileSync(varsFilename)
-      .toString()
-      .replace(/\$(\w+)/g, (_m: string, p1: string) => (p1 in values ? values[p1] : p1));
+    const varsInput = core.getInput('vars');
+    let extra_vars: string | undefined;
+    if (varsInput) {
+      const values: Record<string, string> = {
+        ...JSON.parse(varsInput),
+        ARTIFACT_URL: core.getInput('asset_url'),
+        IMAGE_URL: core.getInput('image_url'),
+        GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart
+      };
+      const varsFilename = core.getInput('extravars_template_filename');
+      extra_vars = fs
+        .readFileSync(varsFilename)
+        .toString()
+        .replace(/\$(\w+)/g, (_m: string, p1: string) => (p1 in values ? values[p1] : p1));
+    }
 
     // launch Tower by a rest API
     const towerTemplateId = core.getInput('tower_template_id');
@@ -42,14 +46,14 @@ export default async function action(): Promise<number | void> {
     const auth = hasApiKey ? undefined : { username: towerUser, password: towerPassword };
     const headers = hasApiKey ? { 'x-apikey': towerApiKey } : undefined;
 
-    core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${vars}`);
+    core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${extra_vars}`);
 
     const response = await axios({
       method: 'POST',
       url: `${towerUrl}/job_templates/${towerTemplateId}/launch/`,
       auth,
       headers,
-      data: vars ? { extra_vars: vars } : undefined,
+      data: extra_vars ? { extra_vars } : undefined,
     });
 
     const jobId: number = response.data.job;
