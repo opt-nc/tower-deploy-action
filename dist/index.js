@@ -10238,18 +10238,24 @@ async function action() {
     try {
         // eval expression "$VAR" on extravars template file
         const varsInput = getInput('vars');
+        const values = {
+            ...(varsInput ? JSON.parse(varsInput) : {}),
+            ARTIFACT_URL: getInput('asset_url'),
+            IMAGE_URL: getInput('image_url'),
+            GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart
+        };
+        const varsFilename = getInput('extravars_template_filename');
         let extra_vars;
-        if (varsInput) {
-            const values = {
-                ...JSON.parse(varsInput),
-                ARTIFACT_URL: getInput('asset_url'),
-                IMAGE_URL: getInput('image_url'),
-                GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart
-            };
-            const varsFilename = getInput('extravars_template_filename');
+        if (varsFilename) {
             extra_vars = external_fs_.readFileSync(varsFilename)
                 .toString()
                 .replace(/\$(\w+)/g, (_m, p1) => (p1 in values ? values[p1] : p1));
+        }
+        else {
+            extra_vars = JSON.stringify({
+                IMAGE_URL: values.IMAGE_URL,
+                GITHUB_RUN_ID: values.GITHUB_RUN_ID,
+            });
         }
         // launch Tower by a rest API
         const towerTemplateId = getInput('tower_template_id');
@@ -10268,7 +10274,10 @@ async function action() {
             return -1;
         }
         const auth = hasApiKey ? undefined : { username: towerUser, password: towerPassword };
-        const headers = hasApiKey ? { 'x-apikey': towerApiKey } : undefined;
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(hasApiKey ? { 'x-apikey': towerApiKey } : {})
+        };
         info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${extra_vars}`);
         const response = await lib_axios({
             method: 'POST',

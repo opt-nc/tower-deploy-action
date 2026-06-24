@@ -9,19 +9,24 @@ export default async function action(): Promise<number | void> {
   try {
     // eval expression "$VAR" on extravars template file
     const varsInput = core.getInput('vars');
+    const values: Record<string, string> = {
+      ...(varsInput ? JSON.parse(varsInput) : {}),
+      ARTIFACT_URL: core.getInput('asset_url'),
+      IMAGE_URL: core.getInput('image_url'),
+      GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart
+    };
+    const varsFilename = core.getInput('extravars_template_filename');
     let extra_vars: string | undefined;
-    if (varsInput) {
-      const values: Record<string, string> = {
-        ...JSON.parse(varsInput),
-        ARTIFACT_URL: core.getInput('asset_url'),
-        IMAGE_URL: core.getInput('image_url'),
-        GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart
-      };
-      const varsFilename = core.getInput('extravars_template_filename');
+    if (varsFilename) {
       extra_vars = fs
         .readFileSync(varsFilename)
         .toString()
         .replace(/\$(\w+)/g, (_m: string, p1: string) => (p1 in values ? values[p1] : p1));
+    } else {
+      extra_vars = JSON.stringify({
+        IMAGE_URL: values.IMAGE_URL,
+        GITHUB_RUN_ID: values.GITHUB_RUN_ID,
+      });
     }
 
     // launch Tower by a rest API
@@ -44,7 +49,10 @@ export default async function action(): Promise<number | void> {
     }
 
     const auth = hasApiKey ? undefined : { username: towerUser, password: towerPassword };
-    const headers = hasApiKey ? { 'x-apikey': towerApiKey } : undefined;
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(hasApiKey ? { 'x-apikey': towerApiKey } : {})
+    };
 
     core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${extra_vars}`);
 
