@@ -94,7 +94,9 @@ test('a deploy with success using api key', async () => {
   mockGetInput.mockImplementation((n: string) => inputs[n] ?? '');
 
   nock('https://tower.test', { reqheaders: { 'x-apikey': 'my-api-key' } })
-    .post('/job_templates/1/launch/')
+    .post('/job_templates/1/launch/', (body: { extra_vars: unknown }) => {
+      return typeof body.extra_vars === 'object' && body.extra_vars !== null;
+    })
     .once()
     .reply(201, { job: 10 });
   nock('https://tower.test', { reqheaders: { 'x-apikey': 'my-api-key' } })
