@@ -40,6 +40,8 @@ export default async function action(): Promise<number | void> {
     const hasApiKey = !!towerApiKey;
     const hasUserPass = !!(towerUser || towerPassword);
 
+    core.info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${extra_vars}`);
+
     if (hasApiKey && hasUserPass) {
       core.setFailed('Vous devez définir soit tower_x_api_key, soit tower_user + tower_password, mais pas les deux en même temps.');
       return -1;
@@ -100,18 +102,28 @@ export default async function action(): Promise<number | void> {
     const jobId: number = response.data.job;
     core.info(`📦 Full response: ${JSON.stringify(response.data, null, 2)}`);
 
-    core.info(`🚀 Deploy job launched ${towerUrl}/#/jobs/playbook/${jobId}`);
+    core.info(`🚀 Deploy job launched ${towerUrl}/jobs/${jobId}`);
+    core.info(`🚀 MARC 1`);
     // poll waiting until the end of job in order to know if it will succeed or not
     const maxsteps = (Number(core.getInput('tower_timeout')) || 300) / WAITSTEP;
+    core.info(`🚀 MARC 2`);
     let step = 0;
     while (step < maxsteps) {
       await setTimeout(WAITSTEP * 1000);
+      core.info(`🚀 MARC 3`);
+      core.info(`⌛️ Waiting for Tower job ${towerUrl}/jobs/${jobId} to finish...`);
       const res = await axios({ url: `${towerUrl}/jobs/${jobId}/`, auth, headers });
+      core.info(`🚀 MARC 4`);
+      core.info(`📦 Full response second step: ${JSON.stringify(res.data, null, 2)}`);
+      core.info(`🚀 MARC 5`);
+
 
       if (res.data.status === 'successful') {
+        core.info(`🚀 MARC 6`);
         break;
       } else if (res.data.status === 'failed' || res.data.status === 'cancelled') {
-        core.error(`❌ Deployment failed (${res.data.status}) ${towerUrl}/#/jobs/playbook/${jobId}`);
+        core.info(`🚀 MARC 7`);
+        core.error(`❌ Deployment failed (${res.data.status}) ${towerUrl}/jobs/playbook/${jobId}`);
         core.setFailed(res.data);
         return -1;
       }
