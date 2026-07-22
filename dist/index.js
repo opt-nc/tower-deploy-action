@@ -13955,7 +13955,6 @@ async function action() {
         let step = 0;
         while (step < maxsteps) {
             await (0,promises_namespaceObject.setTimeout)(WAITSTEP * 1000);
-            info(`⌛️ Waiting for Tower job ${towerUrl}/jobs/${jobId} to finish...`);
             const res = await lib_axios({ url: `${towerUrl}/jobs/${jobId}/`, auth, headers });
             if (res.data.status === 'successful') {
                 break;

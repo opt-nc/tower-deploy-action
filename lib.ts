@@ -105,7 +105,6 @@ export default async function action(): Promise<number | void> {
     let step = 0;
     while (step < maxsteps) {
       await setTimeout(WAITSTEP * 1000);
-      core.info(`⌛️ Waiting for Tower job ${towerUrl}/jobs/${jobId} to finish...`);
       const res = await axios({ url: `${towerUrl}/jobs/${jobId}/`, auth, headers });
 
       if (res.data.status === 'successful') {
