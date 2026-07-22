@@ -13899,7 +13899,6 @@ async function action() {
         const towerApiKey = getInput('tower_x_api_key');
         const hasApiKey = !!towerApiKey;
         const hasUserPass = !!(towerUser || towerPassword);
-        info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${extra_vars}`);
         if (hasApiKey && hasUserPass) {
             setFailed('Vous devez définir soit tower_x_api_key, soit tower_user + tower_password, mais pas les deux en même temps.');
             return -1;
@@ -13941,7 +13940,7 @@ async function action() {
                 };
             }
         }
-        info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch :\n${extra_vars}`);
+        info(`⚡️ Launching Tower job ${towerUrl}/job_templates/${towerTemplateId}/launch/ :\n${extra_vars}`);
         const response = await lib_axios({
             method: 'POST',
             url: `${towerUrl}/job_templates/${towerTemplateId}/launch/`,
@@ -13950,28 +13949,19 @@ async function action() {
             data: extra_vars ? { extra_vars: extraVarsPayload } : undefined,
         });
         const jobId = response.data.job;
-        info(`📦 Full response: ${JSON.stringify(response.data, null, 2)}`);
-        info(`🚀 Deploy job launched ${towerUrl}/jobs/${jobId}`);
-        info(`🚀 MARC 1`);
+        info(`🚀 Deploy job launched ${towerUrl}/jobs/${jobId}/`);
         // poll waiting until the end of job in order to know if it will succeed or not
         const maxsteps = (Number(getInput('tower_timeout')) || 300) / WAITSTEP;
-        info(`🚀 MARC 2`);
         let step = 0;
         while (step < maxsteps) {
             await (0,promises_namespaceObject.setTimeout)(WAITSTEP * 1000);
-            info(`🚀 MARC 3`);
             info(`⌛️ Waiting for Tower job ${towerUrl}/jobs/${jobId} to finish...`);
             const res = await lib_axios({ url: `${towerUrl}/jobs/${jobId}/`, auth, headers });
-            info(`🚀 MARC 4`);
-            info(`📦 Full response second step: ${JSON.stringify(res.data, null, 2)}`);
-            info(`🚀 MARC 5`);
             if (res.data.status === 'successful') {
-                info(`🚀 MARC 6`);
                 break;
             }
             else if (res.data.status === 'failed' || res.data.status === 'cancelled') {
-                info(`🚀 MARC 7`);
-                error(`❌ Deployment failed (${res.data.status}) ${towerUrl}/jobs/playbook/${jobId}`);
+                error(`❌ Deployment failed (${res.data.status}) ${towerUrl}/jobs/${jobId}/`);
                 setFailed(res.data);
                 return -1;
             }
