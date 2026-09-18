@@ -13,6 +13,9 @@ inputs:
   vars:
     description: "Liste des variables (json) qui seront utilisées dans le template"
     required: false
+  secrets:
+    description: "Liste des secrets (json) qui seront fusionnés avec vars et utilisés dans le template"
+    required: false
   asset_url:
     description: "Url de l'asset à déployer (image_url ou asset_url doit être spécifié)"
     required: false
