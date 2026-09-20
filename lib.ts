@@ -10,8 +10,10 @@ export default async function action(): Promise<number | void> {
   try {
     // eval expression "$VAR" on extravars template file
     const varsInput = core.getInput('vars');
+    const secretsInput = core.getInput('secrets');
     const values: Record<string, string> = {
       ...(varsInput ? JSON.parse(varsInput) : {}),
+      ...(secretsInput ? JSON.parse(secretsInput) : {}),
       ARTIFACT_URL: core.getInput('asset_url'),
       IMAGE_URL: core.getInput('image_url'),
       GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart

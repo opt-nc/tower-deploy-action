@@ -11834,7 +11834,7 @@ axios.default = axios;
 ;// CONCATENATED MODULE: external "timers/promises"
 const promises_namespaceObject = require("timers/promises");
 ;// CONCATENATED MODULE: ./node_modules/js-yaml/dist/js-yaml.mjs
-/*! js-yaml 5.4.1 https://github.com/nodeca/js-yaml @license MIT */
+/*! js-yaml 5.4.2 https://github.com/nodeca/js-yaml @license MIT */
 //#region src/tag.ts
 /**
 * Returned by a scalar resolver when the source does not match its tag.
@@ -14696,6 +14696,7 @@ function doubleQuoteWhitespaceOnly(layout) {
 function applyForceQuotesOption(layout) {
 	if (!layout.presenterOptions.forceQuotes) return;
 	if (layout.isKey || layout.style !== SCALAR_STYLE.PLAIN) return;
+	if (layout.node.tag !== layout.presenterOptions.schema.defaultScalarTag.tagName) return;
 	layout.style = layout.node.value.includes("\n") ? SCALAR_STYLE.DOUBLE_QUOTED : _preferredQuotedStyle(layout);
 }
 function tryLongOrMultilineAsBlock(layout) {
@@ -15443,8 +15444,10 @@ async function action() {
     try {
         // eval expression "$VAR" on extravars template file
         const varsInput = getInput('vars');
+        const secretsInput = getInput('secrets');
         const values = {
             ...(varsInput ? JSON.parse(varsInput) : {}),
+            ...(secretsInput ? JSON.parse(secretsInput) : {}),
             ARTIFACT_URL: getInput('asset_url'),
             IMAGE_URL: getInput('image_url'),
             GITHUB_RUN_ID: process.env.GITHUB_RUN_ID ?? '', // Tower workaround to force restart

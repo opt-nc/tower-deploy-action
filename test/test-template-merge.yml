@@ -1,0 +1,3 @@
+self_foo: $FOO
+self_secret: $SECRET
+self_image_url: $IMAGE_URL

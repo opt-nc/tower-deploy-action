@@ -56,6 +56,70 @@ test('a deploy with success', async () => {
   expect(mockInfo).toHaveBeenCalled();
 });
 
+test('merges vars and secrets, secrets taking precedence on conflict', async () => {
+  // Given
+  const inputs: Record<string, string> = {
+    vars: '{ "SECRET": "from-vars" }',
+    secrets: '{ "SECRET": "from-secrets" }',
+    image_url: 'test:latest',
+    tower_template_id: '1',
+    tower_url: 'https://tower.test',
+    tower_user: 'user',
+    tower_password: 'password',
+    extravars_template_filename: './test/test-template.yml',
+  };
+  mockGetInput.mockImplementation((n: string) => inputs[n] ?? '');
+
+  const auth = { user: 'user', pass: 'password' };
+  nock('https://tower.test')
+    .post('/job_templates/1/launch/', (body: { extra_vars: string }) => {
+      return body.extra_vars === `self_env: '{\n    "TEST": "from-secrets"\n  }'\nself_id: valeur\nself_image_url: test:latest\n`;
+    })
+    .once()
+    .basicAuth(auth)
+    .reply(201, { job: 10 });
+  nock('https://tower.test').get('/jobs/10/').once().basicAuth(auth).reply(200, { status: 'successful' });
+
+  // When
+  await action();
+
+  // Then
+  expect(mockSetFailed).toHaveBeenCalledTimes(0);
+  expect(mockInfo).toHaveBeenCalled();
+});
+
+test('merges vars and secrets without conflicts', async () => {
+  // Given
+  const inputs: Record<string, string> = {
+    vars: '{ "FOO": "foo-value" }',
+    secrets: '{ "SECRET": "secret-value" }',
+    image_url: 'test:latest',
+    tower_template_id: '1',
+    tower_url: 'https://tower.test',
+    tower_user: 'user',
+    tower_password: 'password',
+    extravars_template_filename: './test/test-template-merge.yml',
+  };
+  mockGetInput.mockImplementation((n: string) => inputs[n] ?? '');
+
+  const auth = { user: 'user', pass: 'password' };
+  nock('https://tower.test')
+    .post('/job_templates/1/launch/', (body: { extra_vars: string }) => {
+      return body.extra_vars === `self_foo: foo-value\nself_secret: secret-value\nself_image_url: test:latest\n`;
+    })
+    .once()
+    .basicAuth(auth)
+    .reply(201, { job: 10 });
+  nock('https://tower.test').get('/jobs/10/').once().basicAuth(auth).reply(200, { status: 'successful' });
+
+  // When
+  await action();
+
+  // Then
+  expect(mockSetFailed).toHaveBeenCalledTimes(0);
+  expect(mockInfo).toHaveBeenCalled();
+});
+
 test('a failure with tower', async () => {
   // Given
   const inputs: Record<string, string> = {
