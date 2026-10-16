@@ -29,7 +29,7 @@ jobs:
       - name: 📦 Semantic Release
         if: github.ref == 'refs/heads/main'
         id: release
-        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90
+        uses: cycjimmy/semantic-release-action@bda3da8d0cac44ed30fdc42bf9ad6a0362ce0583
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
