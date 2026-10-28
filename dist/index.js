@@ -11834,7 +11834,7 @@ axios.default = axios;
 ;// CONCATENATED MODULE: external "timers/promises"
 const promises_namespaceObject = require("timers/promises");
 ;// CONCATENATED MODULE: ./node_modules/js-yaml/dist/js-yaml.mjs
-/*! js-yaml 5.4.2 https://github.com/nodeca/js-yaml @license MIT */
+/*! js-yaml 5.5.0 https://github.com/nodeca/js-yaml @license MIT */
 //#region src/tag.ts
 /**
 * Returned by a scalar resolver when the source does not match its tag.
@@ -12660,10 +12660,8 @@ var Schema = class Schema {
 					if (tag.matchByTagPrefix) prefix.sequence.push(tag);
 					else exact.sequence[tag.tagName] = tag;
 					break;
-				case "mapping":
-					if (tag.matchByTagPrefix) prefix.mapping.push(tag);
-					else exact.mapping[tag.tagName] = tag;
-					break;
+				case "mapping": if (tag.matchByTagPrefix) prefix.mapping.push(tag);
+				else exact.mapping[tag.tagName] = tag;
 			}
 		}
 		const implicitScalarAnyFirstChar = implicitScalarTags.filter((tag) => tag.implicitFirstChars === null);
@@ -13251,16 +13249,17 @@ function getBlockValue(input, start, end, indent, chomping, folded) {
 		}
 		const content = line.slice(textIndent);
 		const first = content.charCodeAt(0);
-		if (folded) if (first === 32 || first === 9) {
-			atMoreIndented = true;
-			result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
-		} else if (atMoreIndented) {
-			atMoreIndented = false;
-			result += "\n".repeat(emptyLines + 1);
-		} else if (emptyLines === 0) {
-			if (didReadContent) result += " ";
-		} else result += "\n".repeat(emptyLines);
-		else result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+		if (folded) {
+			if (first === 32 || first === 9) {
+				atMoreIndented = true;
+				result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+			} else if (atMoreIndented) {
+				atMoreIndented = false;
+				result += "\n".repeat(emptyLines + 1);
+			} else if (emptyLines === 0) {
+				if (didReadContent) result += " ";
+			} else result += "\n".repeat(emptyLines);
+		} else result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
 		result += content;
 		didReadContent = true;
 		emptyLines = 0;
@@ -13294,24 +13293,69 @@ var DEFAULT_TAG_HANDLERS = Object.assign(Object.create(null), {
 	"!": "!",
 	"!!": "tag:yaml.org,2002:"
 });
-function tagPercentEncode(source) {
-	return encodeURI(source).replace(/!/g, "%21");
+var TAG_SUFFIX_CHARS = "-#;/?:@&=+$_.~*'()";
+var TAG_URI_CHARS = TAG_SUFFIX_CHARS + "!,[]";
+var HEX = "0123456789ABCDEF";
+function percentByte(byte) {
+	return "%" + HEX[byte >> 4] + HEX[byte & 15];
+}
+function tagPercentEncode(source, isSuffix) {
+	const allowed = isSuffix ? TAG_SUFFIX_CHARS : TAG_URI_CHARS;
+	let result = "";
+	for (let index = 0; index < source.length; index++) {
+		let ch = source.charCodeAt(index);
+		if (ch >= 48 && ch <= 57 || ch >= 65 && ch <= 90 || ch >= 97 && ch <= 122 || allowed.includes(source[index])) {
+			result += source[index];
+			continue;
+		}
+		if (ch >= 55296 && ch <= 56319) ch = 65536 + ((ch & 1023) << 10) + (source.charCodeAt(++index) & 1023);
+		if (ch < 128) result += percentByte(ch);
+		else if (ch < 2048) result += percentByte(192 | ch >> 6) + percentByte(128 | ch & 63);
+		else if (ch < 65536) result += percentByte(224 | ch >> 12) + percentByte(128 | ch >> 6 & 63) + percentByte(128 | ch & 63);
+		else result += percentByte(240 | ch >> 18) + percentByte(128 | ch >> 12 & 63) + percentByte(128 | ch >> 6 & 63) + percentByte(128 | ch & 63);
+	}
+	return result;
+}
+function tagPercentDecode(source) {
+	let result = "";
+	let index = 0;
+	while (index < source.length) {
+		if (source.charCodeAt(index) !== 37) {
+			result += source[index++];
+			continue;
+		}
+		let ch = parseInt(source.slice(index + 1, index + 3), 16);
+		index += 3;
+		if (ch >= 192) {
+			let remaining = ch < 224 ? 1 : ch < 240 ? 2 : 3;
+			ch &= (1 << 6 - remaining) - 1;
+			while (remaining-- > 0) {
+				ch = ch << 6 | parseInt(source.slice(index + 1, index + 3), 16) & 63;
+				index += 3;
+			}
+		}
+		if (ch < 65536) result += String.fromCharCode(ch);
+		else {
+			ch -= 65536;
+			result += String.fromCharCode(55296 | ch >> 10, 56320 | ch & 1023);
+		}
+	}
+	return result;
 }
 function tagNameFull(rawTag, tagHandlers) {
-	if (rawTag.startsWith("!<") && rawTag.endsWith(">")) return decodeURIComponent(rawTag.slice(2, -1));
+	if (rawTag.startsWith("!<") && rawTag.endsWith(">")) return tagPercentDecode(rawTag.slice(2, -1));
 	const handleEnd = rawTag.indexOf("!", 1);
 	const handle = handleEnd === -1 ? "!" : rawTag.slice(0, handleEnd + 1);
-	const prefix = tagHandlers?.[handle] ?? DEFAULT_TAG_HANDLERS[handle] ?? handle;
-	return decodeURIComponent(prefix) + decodeURIComponent(rawTag.slice(handle.length));
+	return tagPercentDecode(tagHandlers?.[handle] ?? DEFAULT_TAG_HANDLERS[handle] ?? handle) + tagPercentDecode(rawTag.slice(handle.length));
 }
 function tagNameShort(fullTag) {
 	let tag = fullTag;
 	if (tag.charCodeAt(0) === 33) {
 		tag = tag.slice(1);
-		return `!${tagPercentEncode(tag)}`;
+		return `!${tagPercentEncode(tag, true)}`;
 	}
-	if (tag.slice(0, 18) === "tag:yaml.org,2002:") return `!!${tagPercentEncode(tag.slice(18))}`;
-	return `!<${tagPercentEncode(tag)}>`;
+	if (tag.slice(0, 18) === "tag:yaml.org,2002:") return `!!${tagPercentEncode(tag.slice(18), true)}`;
+	return `!<${tagPercentEncode(tag, false)}>`;
 }
 //#endregion
 //#region src/parser/constructor.ts
@@ -13784,7 +13828,11 @@ function skipUntilLineEnd(state) {
 	while (ch !== 0 && !isEol(ch)) ch = state.input.charCodeAt(++state.position);
 }
 function checkPrintable(state, start, end) {
-	if (PATTERN_NON_PRINTABLE.test(state.input.slice(start, end))) throwError(state, "the stream contains non-printable characters");
+	const match = PATTERN_NON_PRINTABLE.exec(state.input.slice(start, end));
+	if (match !== null) {
+		state.position = start + match.index + match[0].length - 1;
+		throwError(state, "the stream contains non-printable characters");
+	}
 }
 function readTagProperty(state, props, inFlow) {
 	if (state.input.charCodeAt(state.position) !== 33) return false;
@@ -13811,12 +13859,14 @@ function readTagProperty(state, props, inFlow) {
 		state.position++;
 	} else {
 		while (ch !== 0 && !isWsOrEol(ch) && !(inFlow && isFlowIndicator(ch))) {
-			if (ch === 33) if (!isNamed) {
-				tagHandle = state.input.slice(suffixStart - 1, state.position + 1);
-				if (!PATTERN_TAG_HANDLE.test(tagHandle)) throwError(state, "named tag handle cannot contain such characters");
-				isNamed = true;
-				suffixStart = state.position + 1;
-			} else throwError(state, "tag suffix cannot contain exclamation marks");
+			if (ch === 33) {
+				if (!isNamed) {
+					tagHandle = state.input.slice(suffixStart - 1, state.position + 1);
+					if (!PATTERN_TAG_HANDLE.test(tagHandle)) throwError(state, "named tag handle cannot contain such characters");
+					isNamed = true;
+					suffixStart = state.position + 1;
+				} else throwError(state, "tag suffix cannot contain exclamation marks");
+			}
 			ch = state.input.charCodeAt(++state.position);
 		}
 		tagName = state.input.slice(suffixStart, state.position);
@@ -13969,7 +14019,7 @@ function readBlockScalar(state, parentIndent, props) {
 				state.position = linePosition + column;
 				throwError(state, "tab characters must not be used in indentation");
 			}
-			if (column < maxLeadingIndent) {
+			if (column >= parentIndent && column < maxLeadingIndent) {
 				state.position = linePosition + column;
 				throwError(state, "bad indentation of a mapping entry");
 			}
@@ -14000,7 +14050,7 @@ function readBlockScalar(state, parentIndent, props) {
 function canStartPlainScalar(state, nodeContext) {
 	const ch = state.input.charCodeAt(state.position);
 	const inFlow = nodeContext === CONTEXT_FLOW_IN;
-	if (ch === 0 || isWsOrEol(ch) || ch === 35 || ch === 38 || ch === 42 || ch === 33 || ch === 124 || ch === 62 || ch === 39 || ch === 34 || ch === 37 || ch === 64 || ch === 96 || inFlow && isFlowIndicator(ch)) return false;
+	if (ch === 0 || isWsOrEol(ch) || ch === 35 || ch === 38 || ch === 42 || ch === 33 || ch === 124 || ch === 62 || ch === 39 || ch === 34 || ch === 37 || ch === 64 || ch === 96 || isFlowIndicator(ch)) return false;
 	if (ch === 63 || ch === 45) {
 		const following = state.input.charCodeAt(state.position + 1);
 		if (isWsOrEolOrEnd(following) || inFlow && isFlowIndicator(following)) return false;
@@ -14179,13 +14229,16 @@ function readBlockMapping(state, nodeIndent, flowIndent, props) {
 					ch = state.input.charCodeAt(++state.position);
 					if (!isWsOrEolOrEnd(ch)) throwError(state, "a whitespace character is expected after the key-value separator within a block mapping");
 					if (!mappingOpened) {
-						restoreState(state, beforeKey);
-						addMappingEvent(state, beforeKey.position, props.anchorStart, props.anchorEnd, props.tagStart, props.tagEnd, COLLECTION_STYLE.BLOCK);
+						state.events.splice(beforeKey.eventsLength, 0, {
+							type: EVENT_ID.MAPPING,
+							start: beforeKey.position,
+							anchorStart: props.anchorStart,
+							anchorEnd: props.anchorEnd,
+							tagStart: props.tagStart,
+							tagEnd: props.tagEnd,
+							style: COLLECTION_STYLE.BLOCK
+						});
 						mappingOpened = true;
-						parseNode(state, flowIndent, CONTEXT_FLOW_OUT, false, true);
-						ch = state.input.charCodeAt(state.position);
-						while (isWhiteSpace(ch)) ch = state.input.charCodeAt(++state.position);
-						state.position++;
 					}
 					detected = true;
 					atExplicitKey = false;
@@ -14269,19 +14322,20 @@ function parseNode(state, parentIndent, nodeContext, allowToSeek, allowCompact, 
 	if (indentStatus === 1 || nodeContext === CONTEXT_BLOCK_OUT) {
 		const flowIndent = nodeContext === CONTEXT_FLOW_IN || nodeContext === CONTEXT_FLOW_OUT ? parentIndent : parentIndent + 1;
 		const blockIndent = state.position - state.lineStart;
-		if (indentStatus === 1) if (allowBlockCollections && (readBlockSequence(state, blockIndent, props) || readBlockMapping(state, blockIndent, flowIndent, props)) || readFlowCollection(state, flowIndent, props)) hasContent = true;
-		else {
-			const ch = state.input.charCodeAt(state.position);
-			if (propertyStart !== null && allowPropertyMapping && allowBlockStyles && !allowBlockCollections && ch !== 124 && ch !== 62) {
-				const fallbackState = snapshotState(state);
-				const propertyIndent = propertyStart.position - propertyStart.lineStart;
-				restoreState(state, propertyStart);
-				if (readBlockMapping(state, propertyIndent, flowIndent, emptyProperties()) && state.events[fallbackState.eventsLength]?.type === EVENT_ID.MAPPING) hasContent = true;
-				else restoreState(state, fallbackState);
+		if (indentStatus === 1) {
+			if (allowBlockCollections && (readBlockSequence(state, blockIndent, props) || readBlockMapping(state, blockIndent, flowIndent, props)) || readFlowCollection(state, flowIndent, props)) hasContent = true;
+			else {
+				const ch = state.input.charCodeAt(state.position);
+				if (propertyStart !== null && allowPropertyMapping && allowBlockStyles && !allowBlockCollections && ch !== 124 && ch !== 62) {
+					const fallbackState = snapshotState(state);
+					const propertyIndent = propertyStart.position - propertyStart.lineStart;
+					restoreState(state, propertyStart);
+					if (readBlockMapping(state, propertyIndent, flowIndent, emptyProperties()) && state.events[fallbackState.eventsLength]?.type === EVENT_ID.MAPPING) hasContent = true;
+					else restoreState(state, fallbackState);
+				}
+				if (!hasContent && (allowBlockScalars && readBlockScalar(state, flowIndent, props) || readSingleQuotedScalar(state, flowIndent, props) || readDoubleQuotedScalar(state, flowIndent, props) || readAlias(state, props) || readPlainScalar(state, flowIndent, nodeContext, props))) hasContent = true;
 			}
-			if (!hasContent && (allowBlockScalars && readBlockScalar(state, flowIndent, props) || readSingleQuotedScalar(state, flowIndent, props) || readDoubleQuotedScalar(state, flowIndent, props) || readAlias(state, props) || readPlainScalar(state, flowIndent, nodeContext, props))) hasContent = true;
-		}
-		else if (indentStatus === 0) hasContent = allowBlockCollections && readBlockSequence(state, blockIndent, props);
+		} else if (indentStatus === 0) hasContent = allowBlockCollections && readBlockSequence(state, blockIndent, props);
 	}
 	allowBlockScalars = allowBlockScalars && !hasContent;
 	if (!hasContent && (props.anchorStart !== NO_RANGE$1 || props.tagStart !== NO_RANGE$1 || allowBlockScalars)) {
@@ -14628,20 +14682,18 @@ function visitNode(node, visitor, ctx) {
 				isKey: false
 			})) return true;
 			break;
-		case "mapping":
-			for (const { key, value } of node.items) {
-				if (visitNode(key, visitor, {
-					depth,
-					parent: node,
-					isKey: true
-				})) return true;
-				if (visitNode(value, visitor, {
-					depth,
-					parent: node,
-					isKey: false
-				})) return true;
-			}
-			break;
+		case "mapping": for (const { key, value } of node.items) {
+			if (visitNode(key, visitor, {
+				depth,
+				parent: node,
+				isKey: true
+			})) return true;
+			if (visitNode(value, visitor, {
+				depth,
+				parent: node,
+				isKey: false
+			})) return true;
+		}
 	}
 	return false;
 }
@@ -15073,8 +15125,10 @@ function writeBlockMapping(state, level, node, compact) {
 		const keyHasLineBreak = key.kind === "scalar" && key.value.indexOf("\n") !== -1;
 		const keyIsTooLong = keyText.length > 1024 && /^[\s\S]{1025}/u.test(keyText);
 		const explicitPair = keyIsBlock || keyHasLineBreak || keyIsTooLong;
-		if (explicitPair) if (keyText && CHAR_LINE_FEED === keyText.charCodeAt(0)) pairBuffer += "?";
-		else pairBuffer += "? ";
+		if (explicitPair) {
+			if (keyText && CHAR_LINE_FEED === keyText.charCodeAt(0)) pairBuffer += "?";
+			else pairBuffer += "? ";
+		}
 		pairBuffer += keyText;
 		if (explicitPair) pairBuffer += generateNextLine(state, level);
 		const valueText = writeNode(state, level + 1, value, node, {
@@ -15110,12 +15164,15 @@ function writeNode(state, level, node, parent, ctx) {
 	let body;
 	let shouldPrintTag = node.tagged;
 	const useBlockCollection = block && (node.kind === "mapping" || node.kind === "sequence") && node.style === COLLECTION_STYLE.BLOCK && node.items.length !== 0;
-	if (node.kind === "mapping") if (useBlockCollection) body = writeBlockMapping(state, level, node, compact);
-	else body = writeFlowMapping(state, level, node);
-	else if (node.kind === "sequence") if (useBlockCollection) if (state.seqNoIndent && !isblockseq && level > 0) body = writeBlockSequence(state, level - 1, node, compact);
-	else body = writeBlockSequence(state, level, node, compact);
-	else body = writeFlowSequence(state, level, node);
-	else {
+	if (node.kind === "mapping") {
+		if (useBlockCollection) body = writeBlockMapping(state, level, node, compact);
+		else body = writeFlowMapping(state, level, node);
+	} else if (node.kind === "sequence") {
+		if (useBlockCollection) {
+			if (state.seqNoIndent && !isblockseq && level > 0) body = writeBlockSequence(state, level - 1, node, compact);
+			else body = writeBlockSequence(state, level, node, compact);
+		} else body = writeFlowSequence(state, level, node);
+	} else {
 		const layout = scalarLayout(state, node, parent, level, iskey, !block);
 		detectAllowedStyles(layout);
 		for (const rule of state.scalarStyleRules) rule(layout);
@@ -16751,7 +16808,7 @@ function save(namespaces) {
 function load() {
 	let r;
 	try {
-		r = exports.storage.getItem('debug');
+		r = exports.storage.getItem('debug') || exports.storage.getItem('DEBUG') ;
 	} catch (error) {
 		// Swallow
 		// XXX (@Qix-) should we be logging these?
@@ -16979,7 +17036,7 @@ function setup(env) {
 
 		const split = (typeof namespaces === 'string' ? namespaces : '')
 			.trim()
-			.replace(' ', ',')
+			.replace(/\s+/g, ',')
 			.split(',')
 			.filter(Boolean);
 
@@ -18034,7 +18091,16 @@ RedirectableRequest.prototype._sanitizeOptions = function (options) {
   if (!options.headers) {
     options.headers = {};
   }
-  if (!isArray(options.sensitiveHeaders)) {
+  // Convert [header1, value1, header2, value2, …] to object
+  else if (Array.isArray(options.headers)) {
+    var headerList = options.headers;
+    options.headers = {};
+    for (var i = 0; i < headerList.length; i += 2) {
+      options.headers[headerList[i]] = headerList[i + 1];
+    }
+  }
+  // Ensure sensitive headers are always present
+  if (!Array.isArray(options.sensitiveHeaders)) {
     options.sensitiveHeaders = [];
   }
 
@@ -18412,10 +18478,6 @@ function isSubdomain(subdomain, domain) {
   return dot > 0 && subdomain[dot] === "." && subdomain.endsWith(domain);
 }
 
-function isArray(value) {
-  return value instanceof Array;
-}
-
 function isString(value) {
   return typeof value === "string" || value instanceof String;
 }
@@ -18433,7 +18495,7 @@ function isURL(value) {
 }
 
 function escapeRegex(regex) {
-  return regex.replace(/[\]\\/()*+?.$]/g, "\\$&");
+  return regex.replace(/[[\]\\/()*+?.^$|]/g, "\\$&");
 }
 
 // Exports
@@ -25064,7 +25126,7 @@ function defaultFactory (origin, opts) {
 }
 
 class Agent extends DispatcherBase {
-  constructor ({ factory = defaultFactory, maxRedirections = 0, connect, ...options } = {}) {
+  constructor ({ factory = defaultFactory, maxRedirections = 0, connect, tls, ...options } = {}) {
     if (typeof factory !== 'function') {
       throw new InvalidArgumentError('factory must be a function.')
     }
@@ -25083,11 +25145,15 @@ class Agent extends DispatcherBase {
       connect = { ...connect }
     }
 
+    if (tls && typeof tls !== 'function') {
+      tls = { ...tls }
+    }
+
     this[kInterceptors] = options.interceptors?.Agent && Array.isArray(options.interceptors.Agent)
       ? options.interceptors.Agent
       : [createRedirectInterceptor({ maxRedirections })]
 
-    this[kOptions] = { ...util.deepClone(options), connect }
+    this[kOptions] = { ...util.deepClone(options), connect, tls }
     this[kOptions].interceptors = options.interceptors
       ? { ...options.interceptors }
       : undefined
@@ -26122,8 +26188,6 @@ async function connectH1 (client, socket) {
   socket[kParser] = new Parser(client, socket, llhttpInstance)
 
   addListener(socket, 'error', function (err) {
-    assert(err.code !== 'ERR_TLS_CERT_ALTNAME_INVALID')
-
     const parser = this[kParser]
 
     // On Mac OS, we get an ECONNRESET even if there is a full body to be forwarded
@@ -27054,8 +27118,6 @@ async function connectH2 (client, socket) {
   socket[kHTTP2Session] = session
 
   util.addListener(socket, 'error', function (err) {
-    assert(err.code !== 'ERR_TLS_CERT_ALTNAME_INVALID')
-
     this[kError] = err
 
     this[kClient][kOnError](err)
@@ -27129,8 +27191,6 @@ function resumeH2 (client) {
 }
 
 function onHttp2SessionError (err) {
-  assert(err.code !== 'ERR_TLS_CERT_ALTNAME_INVALID')
-
   this[kSocket][kError] = err
   this[kClient][kOnError](err)
 }
@@ -27829,9 +27889,10 @@ class Client extends DispatcherBase {
     // h2
     maxConcurrentStreams,
     allowH2,
-    webSocket
+    webSocket,
+    eventSource
   } = {}) {
-    super({ webSocket })
+    super({ webSocket, eventSource })
 
     if (keepAlive !== undefined) {
       throw new InvalidArgumentError('unsupported keepAlive, use pipelining=0 instead')
@@ -28353,6 +28414,7 @@ module.exports = Client
 "use strict";
 
 
+const buffer = __nccwpck_require__(4573)
 const Dispatcher = __nccwpck_require__(883)
 const {
   ClientDestroyedError,
@@ -28365,6 +28427,7 @@ const kOnDestroyed = Symbol('onDestroyed')
 const kOnClosed = Symbol('onClosed')
 const kInterceptedDispatch = Symbol('Intercepted Dispatch')
 const kWebSocketOptions = Symbol('webSocketOptions')
+const kEventSourceOptions = Symbol('eventSourceOptions')
 
 class DispatcherBase extends Dispatcher {
   constructor (opts) {
@@ -28375,12 +28438,19 @@ class DispatcherBase extends Dispatcher {
     this[kClosed] = false
     this[kOnClosed] = []
     this[kWebSocketOptions] = opts?.webSocket ?? {}
+    this[kEventSourceOptions] = opts?.eventSource ?? {}
   }
 
   get webSocketOptions () {
     return {
       maxFragments: this[kWebSocketOptions].maxFragments ?? 131072,
       maxPayloadSize: this[kWebSocketOptions].maxPayloadSize ?? 128 * 1024 * 1024
+    }
+  }
+
+  get eventSourceOptions () {
+    return {
+      maxEventSize: this[kEventSourceOptions].maxEventSize ?? buffer.kStringMaxLength
     }
   }
 
@@ -34781,6 +34851,7 @@ module.exports = {
 
 "use strict";
 
+const buffer = __nccwpck_require__(4573)
 const { Transform } = __nccwpck_require__(7075)
 const { isASCIINumber, isValidLastEventId } = __nccwpck_require__(4811)
 
@@ -34805,10 +34876,18 @@ const COLON = 0x3A
  */
 const SPACE = 0x20
 
+const defaultMaxEventSize = buffer.kStringMaxLength
+
 const DATA = Buffer.from('data')
 const EVENT = Buffer.from('event')
 const ID = Buffer.from('id')
 const RETRY = Buffer.from('retry')
+
+// Each data field creates a string node, and each unconsumed input chunk keeps
+// a Buffer wrapper. The absolute ceiling protects the large default byte limit.
+const minParserItems = 1024
+const maxParserItems = 131072
+const bytesPerParserItem = 128
 
 function isASCIINumberBytes (buffer, start) {
   if (start >= buffer.length) {
@@ -34846,6 +34925,12 @@ function isFieldName (line, length, field) {
   }
 
   return true
+}
+
+function createMaxEventSizeExceededError () {
+  const error = new Error('EventSource message size exceeded')
+  error.aborted = false
+  return error
 }
 
 /**
@@ -34896,6 +34981,13 @@ class EventSourceStream extends Transform {
   pos = 0
   lineChunkIndex = 0
   linePos = 0
+  lineLength = 0
+  eventSize = 0
+  eventFieldSizes = { data: 0, event: 0, id: 0, retry: 0 }
+  dataLineCount = 0
+  maxEventSize
+  maxDataLines
+  maxBufferedChunks
 
   event = {
     data: undefined,
@@ -34906,6 +34998,7 @@ class EventSourceStream extends Transform {
 
   /**
    * @param {object} options
+   * @param {number} [options.maxEventSize]
    * @param {eventSourceSettings} options.eventSourceSettings
    * @param {Function} [options.push]
    */
@@ -34917,6 +35010,12 @@ class EventSourceStream extends Transform {
     super(options)
 
     this.state = options.eventSourceSettings || {}
+    this.maxEventSize = options.maxEventSize ?? defaultMaxEventSize
+    const parserItemLimit = this.maxEventSize > 0
+      ? Math.min(maxParserItems, Math.max(minParserItems, Math.floor(this.maxEventSize / bytesPerParserItem)))
+      : 0
+    this.maxDataLines = parserItemLimit
+    this.maxBufferedChunks = parserItemLimit
     if (options.push) {
       this.push = options.push
     }
@@ -34934,6 +35033,14 @@ class EventSourceStream extends Transform {
       return
     }
 
+    // A leading line ending can immediately release the currently buffered
+    // line, even when it uses the final allowed chunk slot.
+    if (this.maxEventSize > 0 &&
+        this.chunks.length >= this.maxBufferedChunks &&
+        chunk[0] !== LF && chunk[0] !== CR) {
+      callback(createMaxEventSizeExceededError())
+      return
+    }
     this.chunks.push(chunk)
 
     // Strip leading byte-order-mark if we opened the stream and started
@@ -35012,7 +35119,12 @@ class EventSourceStream extends Transform {
 
         // In any case, we can process the line as we reached an
         // end-of-line character
-        this.parseLine(this.readLine(), this.event)
+        try {
+          this.parseLine(this.readLine(), this.event)
+        } catch (error) {
+          callback(error)
+          return
+        }
         this.consumeCurrentByte()
         // A line was processed and this could be the end of the event. We need
         // to check if the next line is empty to determine if the event is
@@ -35021,15 +35133,28 @@ class EventSourceStream extends Transform {
         continue
       }
 
+      // readLine() is only called after CR or LF. Reject an unfinished line
+      // before it can retain an unbounded number of decoded chunks. The seven
+      // extra bytes allow the longest field prefix ("event: " or "retry: ").
+      if (this.maxEventSize > 0 && ++this.lineLength > this.maxEventSize + 7) {
+        callback(createMaxEventSizeExceededError())
+        return
+      }
       this.advanceCursor()
     }
 
     callback()
   }
 
+  _destroy (error, callback) {
+    this.chunks.length = 0
+    this.clearEvent()
+    super._destroy(error, callback)
+  }
+
   /**
    * @param {Buffer} line
-   * @param {EventStreamEvent} event
+   * @param {EventSourceStreamEvent} event
    */
   parseLine (line, event) {
     // If the line is empty (a blank line)
@@ -35063,6 +35188,13 @@ class EventSourceStream extends Transform {
     }
 
     if (isFieldName(line, fieldLength, DATA)) {
+      if (this.maxEventSize > 0 && this.dataLineCount >= this.maxDataLines) {
+        throw createMaxEventSizeExceededError()
+      }
+      const valueBytes = line.length - valueStart
+      const dataSize = this.eventFieldSizes.data + (event.data === undefined ? 0 : 1) + valueBytes
+      this.setEventFieldSize('data', dataSize)
+
       const value = line.toString('utf8', valueStart)
 
       if (event.data === undefined) {
@@ -35070,11 +35202,13 @@ class EventSourceStream extends Transform {
       } else {
         event.data += `\n${value}`
       }
+      this.dataLineCount++
       return
     }
 
     if (isFieldName(line, fieldLength, RETRY)) {
       if (isASCIINumberBytes(line, valueStart)) {
+        this.setEventFieldSize('retry', line.length - valueStart)
         event.retry = line.toString('utf8', valueStart)
       }
       return
@@ -35082,18 +35216,27 @@ class EventSourceStream extends Transform {
 
     if (isFieldName(line, fieldLength, ID)) {
       if (isValidLastEventIdBytes(line, valueStart)) {
+        this.setEventFieldSize('id', line.length - valueStart)
         event.id = line.toString('utf8', valueStart)
       }
       return
     }
 
     if (isFieldName(line, fieldLength, EVENT)) {
-      const value = line.toString('utf8', valueStart)
-
-      if (value.length > 0) {
-        event.event = value
+      if (valueStart < line.length) {
+        this.setEventFieldSize('event', line.length - valueStart)
+        event.event = line.toString('utf8', valueStart)
       }
     }
+  }
+
+  setEventFieldSize (field, size) {
+    const eventSize = this.eventSize - this.eventFieldSizes[field] + size
+    if (this.maxEventSize > 0 && eventSize > this.maxEventSize) {
+      throw createMaxEventSizeExceededError()
+    }
+    this.eventSize = eventSize
+    this.eventFieldSizes[field] = size
   }
 
   /**
@@ -35126,6 +35269,12 @@ class EventSourceStream extends Transform {
     this.event.event = undefined
     this.event.id = undefined
     this.event.retry = undefined
+    this.eventSize = 0
+    this.dataLineCount = 0
+    this.eventFieldSizes.data = 0
+    this.eventFieldSizes.event = 0
+    this.eventFieldSizes.id = 0
+    this.eventFieldSizes.retry = 0
   }
 
   hasPendingEvent () {
@@ -35161,14 +35310,16 @@ class EventSourceStream extends Transform {
   syncLineStartToCursor () {
     this.lineChunkIndex = this.chunkIndex
     this.linePos = this.pos
+    this.lineLength = 0
     this.dropConsumedChunks()
   }
 
   dropConsumedChunks () {
-    while (this.lineChunkIndex > 0) {
-      this.chunks.shift()
-      this.lineChunkIndex--
-      this.chunkIndex--
+    if (this.lineChunkIndex > 0) {
+      const consumed = this.lineChunkIndex
+      this.chunks.splice(0, consumed)
+      this.lineChunkIndex = 0
+      this.chunkIndex -= consumed
     }
 
     if (this.chunkIndex === this.chunks.length) {
@@ -35294,6 +35445,7 @@ const { isNetworkError } = __nccwpck_require__(9051)
 const { delay } = __nccwpck_require__(4811)
 const { kEnumerableProperty } = __nccwpck_require__(3440)
 const { environmentSettingsObject } = __nccwpck_require__(3168)
+const { getGlobalDispatcher } = __nccwpck_require__(2581)
 
 let experimentalWarned = false
 
@@ -35575,6 +35727,7 @@ class EventSource extends EventTarget {
 
       const eventSourceStream = new EventSourceStream({
         eventSourceSettings: this.#state,
+        maxEventSize: this.#dispatcher.eventSourceOptions?.maxEventSize,
         push: (event) => {
           this.dispatchEvent(createFastMessageEvent(
             event.type,
@@ -35753,7 +35906,8 @@ webidl.converters.EventSourceInitDict = webidl.dictionaryConverter([
   },
   {
     key: 'dispatcher', // undici only
-    converter: webidl.converters.any
+    converter: webidl.converters.any,
+    defaultValue: () => getGlobalDispatcher()
   }
 ])
 
@@ -40860,8 +41014,10 @@ async function httpNetworkFetch (
   // 19. Run these steps in parallel:
 
   //    1. Run these steps, but abort when fetchParams is canceled:
-  fetchParams.controller.onAborted = onAborted
-  fetchParams.controller.on('terminated', onAborted)
+  if (!fetchParams.controller.resume) {
+    fetchParams.controller.on('terminated', onAborted)
+  }
+
   fetchParams.controller.resume = async () => {
     // 1. While true
     while (true) {
@@ -41030,8 +41186,6 @@ async function httpNetworkFetch (
           }
           location = headersList.get('location', true)
 
-          this.body = new Readable({ read: resume })
-
           const decoders = []
 
           const willFollow = location && request.redirect === 'follow' &&
@@ -41049,7 +41203,7 @@ async function httpNetworkFetch (
             // CVE fix similar to urllib3 (GHSA-gm62-xv2j-4w53) and curl (CVE-2022-32206).
             const maxContentEncodings = 5
             if (codings.length > maxContentEncodings) {
-              reject(new Error(`too many content-encodings in response: ${codings.length}, maximum allowed is ${maxContentEncodings}`))
+              this.abort(new Error(`too many content-encodings in response: ${codings.length}, maximum allowed is ${maxContentEncodings}`))
               return true
             }
 
@@ -41081,6 +41235,8 @@ async function httpNetworkFetch (
               }
             }
           }
+
+          this.body = new Readable({ read: resume })
 
           const onError = this.onError.bind(this)
 
@@ -41126,10 +41282,6 @@ async function httpNetworkFetch (
         onComplete () {
           if (this.abort) {
             fetchParams.controller.off('terminated', this.abort)
-          }
-
-          if (fetchParams.controller.onAborted) {
-            fetchParams.controller.off('terminated', fetchParams.controller.onAborted)
           }
 
           fetchParams.controller.ended = true
@@ -47622,6 +47774,20 @@ class ByteParser extends Writable {
         if (isControlFrame(this.#info.opcode)) {
           this.#loop = this.parseControlFrame(body)
           this.#state = parserStates.INFO
+
+          // If the automatic PONG/CLOSE reply filled the socket's write buffer,
+          // stop parsing and resume on drain so a PING flood cannot grow the
+          // outbound queue without bound.
+          const socket = this.ws[kResponse].socket
+          if (this.#loop && socket.writableNeedDrain) {
+            this.#loop = false
+            socket.once('drain', () => {
+              if (this.destroyed) return
+              this.#loop = true
+              this.run(callback)
+            })
+            return
+          }
         } else {
           if (!this.#info.compressed) {
             if (!this.writeFragments(body)) {
