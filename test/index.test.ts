@@ -13,6 +13,7 @@ jest.unstable_mockModule('timers/promises', () => ({
 jest.unstable_mockModule('@actions/core', () => ({
   getInput: mockGetInput,
   info: mockInfo,
+  debug: jest.fn(),
   error: mockError,
   setFailed: mockSetFailed,
 }));

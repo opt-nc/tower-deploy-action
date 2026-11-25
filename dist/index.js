@@ -2864,7 +2864,7 @@ function isDebug() {
  * @param message debug message
  */
 function core_debug(message) {
-    issueCommand('debug', {}, message);
+    command_issueCommand('debug', {}, message);
 }
 /**
  * Adds an error issue
@@ -16475,10 +16475,12 @@ async function action() {
         // poll waiting until the end of job in order to know if it will succeed or not
         const maxsteps = (Number(getInput('tower_timeout')) || 300) / WAITSTEP;
         let step = 0;
+        let succeeded = false;
         while (step < maxsteps) {
             await (0,promises_namespaceObject.setTimeout)(WAITSTEP * 1000);
             const res = await lib_axios({ url: `${towerUrl}/jobs/${jobId}/`, auth, headers });
             if (res.data.status === 'successful') {
+                succeeded = true;
                 break;
             }
             else if (res.data.status === 'failed' || res.data.status === 'cancelled') {
@@ -16488,6 +16490,11 @@ async function action() {
             }
             info(`⌛️ Check ${step}/${maxsteps} : ${res.data.status}`);
             step++;
+        }
+        if (!succeeded) {
+            error(`⏱️ Timeout reached while waiting for job ${towerUrl}/jobs/${jobId}/`);
+            setFailed(`Timeout: deployment did not finish within ${maxsteps * WAITSTEP}s`);
+            return -1;
         }
         info(`✅ Automatic deployment succeeded.`);
     }
@@ -16499,9 +16506,14 @@ async function action() {
         else if (axiosErr.response && axiosErr.response.data) {
             setFailed(axiosErr.response.data);
         }
+        else if (axiosErr.isAxiosError) {
+            setFailed(`Axios error: ${axiosErr.message} (code: ${axiosErr.code ?? 'n/a'}, ` +
+                `${axiosErr.config?.method?.toUpperCase() ?? ''} ${axiosErr.config?.url ?? ''})`);
+        }
         else {
             setFailed(error);
         }
+        core_debug(`Full error: ${error.stack ?? String(error)}`);
     }
 }
 
