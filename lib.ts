@@ -105,11 +105,13 @@ export default async function action(): Promise<number | void> {
     // poll waiting until the end of job in order to know if it will succeed or not
     const maxsteps = (Number(core.getInput('tower_timeout')) || 300) / WAITSTEP;
     let step = 0;
+    let succeeded = false;
     while (step < maxsteps) {
       await setTimeout(WAITSTEP * 1000);
       const res = await axios({ url: `${towerUrl}/jobs/${jobId}/`, auth, headers });
 
       if (res.data.status === 'successful') {
+        succeeded = true;
         break;
       } else if (res.data.status === 'failed' || res.data.status === 'cancelled') {
         core.error(`❌ Deployment failed (${res.data.status}) ${towerUrl}/jobs/${jobId}/`);
@@ -121,6 +123,12 @@ export default async function action(): Promise<number | void> {
       step++;
     }
 
+    if (!succeeded) {
+      core.error(`⏱️ Timeout reached while waiting for job ${towerUrl}/jobs/${jobId}/`);
+      core.setFailed(`Timeout: deployment did not finish within ${maxsteps * WAITSTEP}s`);
+      return -1;
+    }
+
     core.info(`✅ Automatic deployment succeeded.`);
   } catch (error: unknown) {
     const axiosErr = error as AxiosError;
@@ -128,8 +136,14 @@ export default async function action(): Promise<number | void> {
       core.setFailed('HTTP 401 : maybe you have to check tower_user/tower_password inputs ?');
     } else if (axiosErr.response && axiosErr.response.data) {
       core.setFailed(axiosErr.response.data as string);
+    } else if (axiosErr.isAxiosError) {
+      core.setFailed(
+        `Axios error: ${axiosErr.message} (code: ${axiosErr.code ?? 'n/a'}, ` +
+          `${axiosErr.config?.method?.toUpperCase() ?? ''} ${axiosErr.config?.url ?? ''})`,
+      );
     } else {
       core.setFailed(error as Error);
     }
+    core.debug(`Full error: ${(error as Error).stack ?? String(error)}`);
   }
 }
